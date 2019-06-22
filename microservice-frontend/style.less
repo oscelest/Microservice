@@ -1,0 +1,67 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+#__next, #__next * {
+  display: flex;
+  flex-flow: column;
+  box-sizing: border-box;
+  flex: 1 0 auto;
+
+  header {
+    flex-flow: row;
+
+    nav {
+      flex-flow: row;
+      justify-content: space-between;
+
+      #links, #user {
+        flex: 0 0 auto;
+        flex-flow: row;
+      }
+    }
+  }
+
+  h1 {
+    align-items: center;
+  }
+
+  #presentation {
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+
+    > * {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+
+      &:first-child:not(:last-child){
+        padding-right: 0;
+      }
+
+      > * {
+        flex: 0 0 auto;
+      }
+
+      label {
+        margin: 0 0 5px 0;
+      }
+
+      input {
+        margin: 0 0 10px 0;
+      }
+
+      > button {
+        align-self: start;
+        cursor: pointer;
+      }
+    }
+
+  }
+
+}
+
+

@@ -1,0 +1,183 @@
+version: '3.7'
+
+services:
+  database:
+    container_name: microservice-database
+    image: mysql:8.0.16
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    labels:
+      - traefik.enable=false
+    ports:
+      - 3306:3306
+    expose:
+      - '${MYSQL_PORT}'
+
+  message-queue:
+    container_name: microservice-mq
+    image: rabbitmq:3.7.14-alpine
+
+  reverse-proxy:
+    container_name: microservice-reverse-proxy
+    image: traefik
+    command: --api --docker
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  shared:
+    image: microservice-shared
+    container_name: microservice-shared
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=false"
+
+  api:
+    image: microservice-api
+    container_name: microservice-api
+    build:
+      context: .
+      dockerfile: microservice-api/Dockerfile
+    depends_on:
+      - shared
+    command: "npm run start-api"
+    volumes:
+      - ./microservice-api:/usr/src/microservice/microservice-api
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - SECRET_JWT=${SECRET_JWT}
+      - PORT=${PORT}
+      - HOST=${HOST}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:api.${HOST}"
+    expose:
+      - '${PORT}'
+
+  frontend:
+    image: microservice-frontend
+    container_name: microservice-frontend
+    build:
+      context: .
+      dockerfile: microservice-frontend/Dockerfile
+    depends_on:
+      - shared
+    command: "npm run start-frontend"
+    volumes:
+      - ./microservice-frontend:/usr/src/microservice/microservice-frontend
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - SECRET_JWT=${SECRET_JWT}
+      - PORT=${PORT}
+      - HOST=${HOST}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:${HOST}"
+    expose:
+      - '${PORT}'
+
+  websocket:
+    container_name: microservice-websocket
+    image: microservice-websocket
+    build:
+      context: .
+      dockerfile: microservice-websocket/Dockerfile
+    command: "npm run start-websocket"
+    working_dir: /usr/src/microservice/microservice-websocket
+    volumes:
+      - ./microservice-websocket:/usr/src/microservice/microservice-websocket
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - SECRET_JWT=${SECRET_JWT}
+      - PORT=${PORT}
+      - HOST=${HOST}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:ws.${HOST}"
+    expose:
+      - '${PORT}'
+
+  basket:
+    container_name: microservice-basket
+    image: microservice-basket
+    build:
+      context: .
+      dockerfile: microservice-basket/Dockerfile
+    command: "npm run start-basket"
+    working_dir: /usr/src/microservice/microservice-basket
+    volumes:
+      - ./microservice-basket:/usr/src/microservice/microservice-basket
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - PORT=${PORT}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.backend=basket"
+      - "traefik.enable=true"
+    expose:
+      - '${PORT}'
+
+  product:
+    container_name: microservice-product
+    image: microservice-product
+    build:
+      context: .
+      dockerfile: microservice-product/Dockerfile
+    command: "npm run start-product"
+    working_dir: /usr/src/microservice/microservice-product
+    volumes:
+      - ./microservice-product:/usr/src/microservice/microservice-product
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - PORT=${PORT}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.backend=product"
+      - "traefik.enable=true"
+    expose:
+      - '${PORT}'
