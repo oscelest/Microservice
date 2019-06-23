@@ -1,10 +1,5 @@
 # Microservice project
 
-This project includes a set of Node.js microservices that should be served in containers to create an example webshop:
-
-- [Microservice Frontend](https://github.com/oscelest/microservice-frontend)
-- [Microservice Inventory](https://github.com/oscelest/microservice-inventory)
-
 ## Commands to remember:
 
 Start everything (in background and build it):
