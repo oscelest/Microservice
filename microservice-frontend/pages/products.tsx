@@ -1,3 +1,4 @@
+import Link from "next/link";
 import * as React from "react";
 import Frame from "../components/Frame";
 import Product from "../entities/Product";
@@ -20,17 +21,9 @@ class ProductsPage extends React.Component<Props, State> {
     this.setState(Object.assign(this.state, {product_promise: promise}));
   }
   
-  private clickAddProduct(e: React.MouseEvent<HTMLButtonElement>) {
+  private clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
     e.preventDefault();
-    const product = new Product();
-    product.content.key = this.state.key || "";
-    product.content.title = this.state.title || "";
-    product.content.description = this.state.description || "";
-    product.content.image = this.state.image || "";
-    product.content.price = this.state.price || 0;
-    product.content.stock = this.state.stock || 0;
-    return product.create()
-    .then(() => Product.find());
+    this.props.globals.basket.content.products.push(product);
   }
   
   private changeInput(event: React.ChangeEvent<HTMLInputElement>) {
@@ -45,12 +38,17 @@ class ProductsPage extends React.Component<Props, State> {
         <div id="products">
           {this.state.products.map((v, k) => {
             console.log(k, v);
-            return (<div className="product" key={k}>
-              title
-              <span>{v.content.title}</span>
-              <span>Price: {v.content.price / 100} DKK</span>
-              <span>Stock: {v.content.stock}</span>
-            </div>);
+            return (
+              <Link href="/" key={k}>
+                <div className="product">
+                  <span className="title">{v.content.title}</span>
+                  <span className="stock">{v.content.stock} left in stock</span>
+                  <img src={v.content.image} alt={v.content.description}/>
+                  <span className="price">{v.content.price / 100} DKK</span>
+                  <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
+                </div>
+              </Link>
+            );
           })}
         </div>
       </Frame>

@@ -19,7 +19,7 @@ class User extends SingletonEntity<UserContent> {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
-      body:    `${Object.entries(user.content).map(v => `${v[0]}=${v[1]}`).join("&")}&password=${password}`,
+      body:    `${Object.entries(user.content).map(v => `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`).join("&")}&password=${encodeURIComponent(password)}`,
     })
     .then(res => res.json() as Promise<UserCreateResponse>)
     .then(res => res.code === 200 ? Promise.resolve(res.content) : Promise.reject(res));
@@ -41,7 +41,7 @@ class User extends SingletonEntity<UserContent> {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
-      body:    user && `${Object.entries(user.content).map(v => `${v[0]}=${v[1]}`).join("&")}&password=${password}`,
+      body:    user && `${Object.entries(user.content).map(v => `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`).join("&")}&password=${encodeURIComponent(password || "")}`,
     })
     .then(res => res.json() as Promise<UserLoginResponse>)
     .then(res => {
@@ -64,7 +64,7 @@ class User extends SingletonEntity<UserContent> {
   
 }
 
-interface UserContent {
+export interface UserContent {
   id: string
   email: string
   username: string

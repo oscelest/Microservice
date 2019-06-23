@@ -1,7 +1,7 @@
 import _ from "lodash";
 import * as React from "react";
 import Frame from "../components/Frame";
-import User from "../entities/User";
+import User, {UserContent} from "../entities/User";
 import "../style.less";
 import {GlobalState} from "./_app";
 
@@ -36,43 +36,37 @@ class IndexPage extends React.Component<Props, State> {
   }
   
   private changeInputSignup(event: React.ChangeEvent<HTMLInputElement>) {
-    const attribute = (event.target.attributes.getNamedItem("formtarget") || {} as Attr).value;
-    this.setState(Object.assign({}, this.state, {signup: Object.assign({}, this.state.signup, {[attribute]: event.target.value})}) as State);
+    this.setState(_.merge(this.state, {signup: {[(event.target.attributes.getNamedItem("formtarget") || {} as Attr).value]: event.target.value}}) as State);
   }
   
   private changeInputLogin(event: React.ChangeEvent<HTMLInputElement>) {
-    const attribute = (event.target.attributes.getNamedItem("formtarget") || {} as Attr).value;
-    this.setState(Object.assign({}, this.state, {login: Object.assign({}, this.state.login, {[attribute]: event.target.value})}) as State);
+    this.setState(_.merge(this.state, {login: {[(event.target.attributes.getNamedItem("formtarget") || {} as Attr).value]: event.target.value}}) as State);
   }
   
   private clickButtonSignup() {
-    if (this.state.signup.password !== this.state.signup.confirm) return this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {signup: 400})}) as State);
+    if (this.state.signup.password !== this.state.signup.confirm) return this.setState(_.merge({}, this.state, {error: {signup: 400}} as State));
     
     const user = new User();
     user.content.username = this.state.signup.username;
     user.content.email = this.state.signup.email;
     
-    const promise = user.create(this.state.signup.password);
-    this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: promise}), error: Object.assign({}, this.state.error, {signup: 0})}) as State);
-    return promise
-    .then(res => {
-      this.props.globals.setState(Object.assign(this.props.globals, Object.assign({}, this.props.globals.user, {content: res})));
-      const promise = user.login(this.state.signup.password);
-      this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: null, login: promise})}) as State);
-      return promise;
+    this.setState(_.merge({}, this.state, {loading: {signup: user.create(this.state.signup.password)}, error: {signup: 0}} as State));
+    return (this.state.loading.signup as Promise<UserContent>)
+    .then(() => {
+      this.setState(_.merge({}, this.state, {loading: {signup: null, login: user.login(this.state.signup.password)}} as State));
+      return this.state.loading.login;
     })
-    .then(res => this.props.globals.setState(Object.assign(this.props.globals, Object.assign({}, this.props.globals.user, {content: res}))))
-    .catch(err => this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {signup: err.code})}) as State))
-    .finally(() => this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: null, login: null})}) as State));
+    .then(res => this.props.globals.setState(_.merge(this.props.globals, {user: {content: res}} as GlobalState)))
+    .catch(err => this.setState(_.merge(this.state, {error: {signup: err.code}}) as State))
+    .finally(() => this.setState(_.merge(this.state, {loading: {signup: null, login: null}} as State)));
   }
   
   private clickButtonLogin() {
     const user = new User();
     user.content.email = this.state.login.email;
-    const promise = user.login(this.state.login.password);
-    this.setState(_.merge({}, this.state, {loading: {login: promise}, error: {login: 0}}));
+    this.setState(_.merge(this.state, {loading: {login: user.login(this.state.login.password)}, error: {login: 0}}));
     
-    return promise
+    return (this.state.loading.login as Promise<UserContent>)
     .then(res => {
       this.props.globals.setState(_.merge(this.props.globals, {user: {content: res}} as GlobalState));
       return this.props.globals.basket.find()
@@ -94,6 +88,7 @@ class IndexPage extends React.Component<Props, State> {
   }
   
   public render() {
+    console.log(this.props.globals.user.content);
     return (
       <Frame title="Home | Webshop" globals={this.props.globals}>
         <h1>Welcome to the webshop</h1>

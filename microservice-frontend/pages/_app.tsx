@@ -27,13 +27,12 @@ class FrontendApp extends App<Props> {
     return Promise.all([
       this.state.user.login()
       .then(res => Object.assign(this.state.user.content, res))
-      .catch(err => console.log("User error:", err)),
+      .catch(() => this.state.user.logout()),
     ])
     .then(() => Promise.all([
       this.state.basket.find()
       .catch(err => {
         if (err.code !== 404) return Promise.resolve(Object.assign(this.state.basket.content, {products: []}));
-        
         return this.state.basket.create()
         .then(res => Promise.resolve(Object.assign(this.state.basket.content, res)))
         .catch(() => Promise.resolve(Object.assign(this.state.basket.content, {products: []})));
@@ -47,30 +46,6 @@ class FrontendApp extends App<Props> {
       } as IMSC.Message<IMSC.WS.WebsocketMessage>),
     ]))
     .then(() => this.setState(Object.assign({}, this.state, {ready: true})));
-    
-    // this.store.dispatch({
-    //   type:  "assign",
-    //   value: {
-    //     socket: io("ws.localhost"),
-    //     user:   new User(),
-    //     basket: new Basket(),
-    //   },
-    // });
-    
-    // this.store.getState().user.login();
-    
-    // this.store.getState().user.login()
-    // .finally(() => this.store.getState().basket.find());
-    
-    // this.store.getState().socket.on("message", (message: any) => {
-    //   console.log(message);
-    // });
-    //
-    // this.store.getState().socket.on("exception", (message: any) => {
-    //   console.log(message);
-    // });
-    //
-    // console.log(this.store.getState());
   }
   
   public componentWillUnmount() {

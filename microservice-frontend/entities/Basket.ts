@@ -81,7 +81,7 @@ class Basket extends SingletonEntity<BasketContent> {
   
 }
 
-interface BasketContent {
+export interface BasketContent {
   id: string;
   user: User
   products: Product[]

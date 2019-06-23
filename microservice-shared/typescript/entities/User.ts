@@ -71,7 +71,7 @@ class User extends Entity {
   }
   
   public toJSON(): Partial<{ [K in keyof this]: this[K] }> {
-    return _.pick(super.toJSON(), ["id", "username", "email", "time_created"]) as Partial<{ [K in keyof this]: this[K] }>;
+    return _.pick(super.toJSON(), ["id", "username", "level", "email", "time_created"]) as Partial<{ [K in keyof this]: this[K] }>;
   }
   
   public validatePassword(password: string): boolean {

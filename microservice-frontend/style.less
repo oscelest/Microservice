@@ -96,7 +96,98 @@ html, body, #__next {
    * *
    * ***** ***** ***** ***** *****/
 
+  #reception {
 
+  }
+
+  /* ***** ***** ***** ***** *****
+   * *
+   * * Products
+   * *
+   * ***** ***** ***** ***** *****/
+
+  #products {
+
+    flex-flow: row;
+    flex-wrap: wrap;
+    padding: 0px 20px 40px;
+    justify-content: space-around;
+
+    .product {
+      width: 250px;
+      height: 450px;
+      margin: 40px 20px 0;
+      align-items: center;
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, 0.3);
+      transition: box-shadow 200ms ease-in-out;
+
+      &:hover {
+        box-shadow: 0px 0px 5px 3px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 200ms ease-in-out;
+      }
+
+      * {
+        margin-bottom: 10px;
+      }
+
+      span {
+        flex: 0 0 auto;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+
+      .title {
+        height: 60px;
+      }
+
+      img {
+        height: 200px;
+      }
+
+      .price {
+        height: 50px;
+        font-weight: bold;
+        font-size: 22px;
+      }
+
+      .stock {
+        height: 40px;
+        font-style: italic;
+      }
+
+      button {
+        height: 40px;
+        flex-grow: 0;
+        justify-content: center;
+        align-self: center;
+        background: #ffa330;
+        color: white;
+        font-size: 20px;
+        font-family: sans-serif;
+        border: #ffe5c3c2 3px solid;
+        border-radius: 5px;
+        padding: 7.5px;
+        cursor: pointer;
+        box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 200ms ease-in-out;
+        outline: none;
+
+        &:hover {
+          box-shadow: 0px 0px 2px 2px rgba(0, 0, 0, 0.1);
+          transition: box-shadow 200ms ease-in-out;
+        }
+
+        &:active {
+          top: 2px;
+        }
+      }
+    }
+
+  }
 
 }
 

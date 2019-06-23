@@ -44,11 +44,11 @@ class Product extends Entity<ProductContent> {
   public static create(product: Product) {
     return fetch(`${location.protocol}//api.${location.host}/product`, {
       method:  "POST",
-      body:    Object.entries(product.content).map(v => `${v[0]}=${v[1]}`).join("&"),
       headers: {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
+      body:    Object.entries(product.content).map(v => `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`).join("&"),
     })
     .then(res => res.json() as Promise<ProductCreateResponse>)
     .then(res => res.code === 200 ? Promise.resolve(res) : Promise.reject(res))
@@ -56,7 +56,7 @@ class Product extends Entity<ProductContent> {
   
 }
 
-interface ProductContent {
+export interface ProductContent {
   id: string;
   key: string
   title: string

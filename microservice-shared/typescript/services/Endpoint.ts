@@ -167,12 +167,12 @@ class Endpoint<Q extends object, B extends object, P extends object> {
       else {
         if (parameters[key].type === "string") {
           const parameter = (parameters[key] || {}) as Endpoint.Parameter<"string">;
-          if (value.length < (parameter.min_length || 0) || value.length > (parameter.max_length || 0)) return _.set(result, key, null);
+          if (value.length < (parameter.min_length || Number.MIN_SAFE_INTEGER) || value.length > (parameter.max_length || Number.MAX_SAFE_INTEGER)) return _.set(result, key, null);
           return result;
         }
         if (parameters[key].type === "number") {
           const parameter = (parameters[key] || {}) as Endpoint.Parameter<"number">;
-          if (isNaN(+value) || +value < (parameter.min_value || 0) || +value > (parameter.max_value || 0)) return _.set(result, key, null);
+          if (isNaN(+value) || +value < (parameter.min_value || Number.MIN_SAFE_INTEGER) || +value > (parameter.max_value || Number.MAX_SAFE_INTEGER)) return _.set(result, key, null);
           return _.set(result, key, +value);
         }
         if (parameters[key].type === "boolean") {
