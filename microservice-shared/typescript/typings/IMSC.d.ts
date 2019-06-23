@@ -28,6 +28,7 @@ namespace IMSC {
   
   export namespace WS {
     export interface WebsocketMessage {
+      authorize(socket_id: string, jwt: string): Promise<any>
     }
     
     export interface FrontendMessage {

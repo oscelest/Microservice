@@ -1,4 +1,4 @@
-import {AppResponse} from "../pages/_app";
+import {Response} from "../pages/_app";
 import Entity from "../services/Entity";
 
 class Product extends Entity<ProductContent> {
@@ -68,15 +68,15 @@ interface ProductContent {
   time_updated: Date;
 }
 
-interface ProductFindResponse extends AppResponse {
+interface ProductFindResponse extends Response {
   content: ProductContent[]
 }
 
-interface ProductCreateResponse extends AppResponse {
+interface ProductCreateResponse extends Response {
   content: ProductContent
 }
 
-interface ProductFindByIdResponse extends AppResponse {
+interface ProductFindByIdResponse extends Response {
   content: ProductContent
 }
 

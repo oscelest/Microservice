@@ -19,7 +19,7 @@ class Endpoint<Q extends object, B extends object, P extends object> {
   public static static_directory: string;
   
   public static readonly server: http.Server;
-  public static readonly port: number = +process.env.PORT || 3000;
+  public static readonly port: number = +(process.env.PORT || 3000);
   public static readonly flag_published: boolean = false;
   private static readonly application: express.Application = express();
   private static readonly endpoints: { [K in Endpoint.Method]?: {[key: string]: Endpoint<object, object, object>} } = {};
@@ -63,7 +63,7 @@ class Endpoint<Q extends object, B extends object, P extends object> {
       
       if (request.get("Authorization")) {
         try {
-          const decoded = jwt.verify(request.get("Authorization"), process.env.SECRET_JWT) as User.JWT;
+          const decoded = jwt.verify(request.get("Authorization") || "", process.env.SECRET_JWT || "") as User.JWT;
           response.locals.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(decoded.id)}}) || null;
           return next();
         }
@@ -167,7 +167,7 @@ class Endpoint<Q extends object, B extends object, P extends object> {
       else {
         if (parameters[key].type === "string") {
           const parameter = (parameters[key] || {}) as Endpoint.Parameter<"string">;
-          if (value.length < parameter.min_length || value.length > parameter.max_length) return _.set(result, key, null);
+          if (value.length < (parameter.min_length || 0) || value.length > (parameter.max_length || 0)) return _.set(result, key, null);
           return result;
         }
         if (parameters[key].type === "number") {
@@ -230,8 +230,8 @@ namespace Endpoint {
   }
   
   export type Locals<Params extends {}> = {
-    user?: User
-    params?: Params
+    user: User
+    params: Params
     time: Date;
   }
   

@@ -1,9 +1,8 @@
 import * as React from "react";
-import Redux from "redux";
 import Frame from "../components/Frame";
 import Product from "../entities/Product";
 import "../style.less";
-import {AppAction, AppActionTypes, AppState} from "./_app";
+import {GlobalState} from "./_app";
 
 class ProductsPage extends React.Component<Props, State> {
   
@@ -42,7 +41,7 @@ class ProductsPage extends React.Component<Props, State> {
   
   public render() {
     return (
-      <Frame title="Products | Webshop" user={this.props.store.getState().user}>
+      <Frame title="Products | Webshop" globals={this.props.globals}>
         <div id="products">
           {this.state.products.map((v, k) => {
             console.log(k, v);
@@ -61,7 +60,7 @@ class ProductsPage extends React.Component<Props, State> {
 }
 
 interface Props {
-  store: Redux.Store<AppState, AppAction<AppActionTypes>>
+  globals: GlobalState
 }
 
 interface State {

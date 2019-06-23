@@ -1,4 +1,8 @@
-html, body {
+html, body, #__next {
+  display: flex;
+  flex: 1 0 auto;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
 }
@@ -7,12 +11,31 @@ html, body {
   display: flex;
   flex-flow: column;
   box-sizing: border-box;
-  flex: 1 0 auto;
+  position: relative;
+
+  .loader {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.5);
+
+    img {
+      flex: 0 0 auto;
+      width: 200px;
+      height: 200px;
+      position: absolute;
+      align-self: center;
+    }
+  }
 
   header {
     flex-flow: row;
 
     nav {
+      flex: 1 0 auto;
       flex-flow: row;
       justify-content: space-between;
 
@@ -27,7 +50,13 @@ html, body {
     align-items: center;
   }
 
-  #presentation {
+  /* ***** ***** ***** ***** *****
+   * *
+   * * Index - Introduction
+   * *
+   * ***** ***** ***** ***** *****/
+
+  #introduction {
     display: flex;
     flex-flow: row;
     justify-content: center;
@@ -38,7 +67,7 @@ html, body {
       max-width: 400px;
       padding: 40px;
 
-      &:first-child:not(:last-child){
+      &:first-child:not(:last-child) {
         padding-right: 0;
       }
 
@@ -59,8 +88,15 @@ html, body {
         cursor: pointer;
       }
     }
-
   }
+
+  /* ***** ***** ***** ***** *****
+   * *
+   * * Index - Returning Customer
+   * *
+   * ***** ***** ***** ***** *****/
+
+
 
 }
 

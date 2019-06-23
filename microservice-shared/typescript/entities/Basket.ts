@@ -36,7 +36,7 @@ class Basket extends Entity {
   /* Relations - Incoming */
   
   @TypeORM.ManyToOne(type => User, user => user.baskets)
-  @TypeORM.JoinColumn({name: 'user'})
+  @TypeORM.JoinColumn({name: "user"})
   public user: User;
   
   /* Column Initialization */
@@ -67,17 +67,29 @@ class Basket extends Entity {
     }
   }
   
+  public static async findLast(request: Endpoint.Request<object, Basket.FindLastRequestBody>, response: Endpoint.Response<object>): Promise<void> {
+    try {
+      const entity = await Environmental.db_manager.findOne(this, {
+        where:     {
+          user:           {id: Entity.bufferFromUUID(request.body.user)},
+          flag_abandoned: false,
+          flag_completed: false,
+        },
+        relations: ["user", "products"],
+      });
+      if (!entity) return new Response(Response.Code.NotFound, {}).Complete(response);
+      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
+    }
+    catch (e) {
+      new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in findById method on ${this.name} entity.`, e)).Complete(response);
+    }
+  }
+  
   public static async create(request: Endpoint.Request<object, Basket.CreateRequestBody>, response: Endpoint.Response<object>): Promise<void> {
     try {
-      console.log(request.body);
-      console.log(request.query);
-      const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user || "")}}) || null;
       const basket = new this();
-      
       if (basket.id) return new Response(Response.Code.Conflict, request.body).Complete(response);
-      
-      basket.user = user;
-      
+      basket.user = (await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}}) || null) as User;
       await Environmental.db_manager.save(basket);
       new Response(Response.Code.OK, basket.toJSON()).Complete(response);
     }
@@ -102,13 +114,17 @@ class Basket extends Entity {
 
 namespace Basket {
   
-  export type CreateRequestBody = {
-    user: Buffer
+  export interface FindLastRequestBody {
+    user: string
+  }
+  
+  export interface CreateRequestBody {
+    user: string
     flag_abandoned: boolean
     flag_completed: boolean
   }
   
-  export type UpdateRequestBody = {
+  export interface UpdateRequestBody {
     id: Buffer
     user: Buffer
     flag_abandoned: boolean

@@ -1,8 +1,7 @@
 import * as React from "react";
-import Redux from "redux";
 import Input from "../components/Input";
 import Frame from "../components/Frame";
-import {AppAction, AppActionTypes, AppState} from "./_app";
+import {GlobalState} from "./_app";
 
 class LoginPage extends React.Component<Props, State> {
   
@@ -40,7 +39,7 @@ class LoginPage extends React.Component<Props, State> {
   
   public render() {
     return (
-      <Frame title="Login" user={this.props.store.getState().user}>
+      <Frame title="Login" globals={this.props.globals}>
         <label htmlFor="username">Username:</label>
         <Input id="username" onChange={this.changeUsername}/>
         <label htmlFor="password">Password:</label>
@@ -53,7 +52,7 @@ class LoginPage extends React.Component<Props, State> {
 }
 
 interface Props {
-  store: Redux.Store<AppState, AppAction<AppActionTypes>>
+  globals: GlobalState
 }
 
 interface State {

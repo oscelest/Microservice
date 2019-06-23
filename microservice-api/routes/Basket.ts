@@ -34,6 +34,23 @@ new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/:id", Endpoint.Method
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
+new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/last", Endpoint.Method.GET, [
+  (request, response) => rp({
+    method: "GET",
+    url:    `http://basket:${process.env.PORT}/last`,
+    json:   true,
+    body:   {
+      user: response.locals.user ? Entity.uuidFromBuffer(response.locals.user.id) : null,
+    },
+  })
+  .then(res => {
+    if (res.user && res.user.id !== Entity.uuidFromBuffer(response.locals.user.id)) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    return new Response(Response.Code.OK, res.content).Complete(response);
+  })
+  .catch(err => response.status(err.response.statusCode).json(err.response.body)),
+]);
+
+
 new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Method.POST, [
   (request, response) => rp({
     method: "POST",

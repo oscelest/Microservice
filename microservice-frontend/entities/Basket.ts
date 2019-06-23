@@ -1,50 +1,81 @@
-import {AppResponse} from "../pages/_app";
+import {Response} from "../pages/_app";
 import SingletonEntity from "../services/SingletonEntity";
+import Product from "./Product";
 import User from "./User";
 
 class Basket extends SingletonEntity<BasketContent> {
   
   constructor() {
     super();
-    this.content.id = localStorage.basket;
   }
   
-  public find() {
-    return fetch(`${location.protocol}//api.${location.host}/basket/${this.content.id}`, {
+  public find(): Promise<BasketContent> {
+    return Basket.findById(this);
+  }
+  
+  public static findById(): Promise<BasketContent>
+  public static findById(id: string): Promise<BasketContent>
+  public static findById(basket: Basket): Promise<BasketContent>
+  public static findById(basket_or_id?: Basket | string): Promise<BasketContent> {
+    const id = basket_or_id && basket_or_id instanceof Basket ? basket_or_id.content.id : basket_or_id;
+    return fetch(`${location.protocol}//api.${location.host}/basket/${id || localStorage.basket}`, {
       method:  "GET",
       headers: {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
     })
+    .then(res => res.json() as Promise<BasketFindByIdResponse>)
     .then(res => {
-      if (res.status === 200) return res.json() as Promise<BasketGetByIdResponse>;
-      if (res.status !== 404) {
-        if (res.status !== 401 && res.status !== 403) return Promise.reject(res);
-        localStorage.removeItem("basket");
+      if (res.code === 200) {
+        localStorage.basket = res.content.id;
+        return Promise.resolve(res.content)
       }
-      return fetch(`${location.protocol}//api.${location.host}/basket`, {
-        method:  "POST",
-        headers: {
-          "Authorization": localStorage.getItem("jwt") || "",
-          "Content-Type":  "application/x-www-form-urlencoded",
-        },
-      })
-      .then(res => res.status === 200 ? res.json() : Promise.reject(res));
+      return Promise.reject(res)
+    });
+  }
+  
+  public findLast() {
+    return Basket.findLast();
+  }
+  
+  public static findLast() {
+    return fetch(`${location.protocol}//api.${location.host}/basket/last`, {
+      method:  "GET",
+      headers: {
+        "Authorization": localStorage.getItem("jwt") || "",
+        "Content-Type":  "application/x-www-form-urlencoded",
+      },
     })
+    .then(res => res.json() as Promise<BasketFindLastResponse>)
     .then(res => {
-      console.log("RES", res);
-      localStorage.basket = res.content.id;
-      this.content.id = res.content.id;
-      this.content.user = res.content.user || null;
-      this.content.products = res.content.products || [];
-      this.content.flag_abandoned = res.content.flag_abandoned;
-      this.content.flag_completed = res.content.flag_completed;
-      this.content.time_created = new Date(res.content.time_created);
-      this.content.time_updated = new Date(res.content.time_updated);
+      if (res.code === 200) {
+        localStorage.basket = res.content.id;
+        return Promise.resolve(res.content)
+      }
+      return Promise.reject(res)
+    });
+  }
+  
+  public create(): Promise<BasketContent> {
+    return Basket.create();
+  }
+  
+  public static create(): Promise<BasketContent> {
+    return fetch(`${location.protocol}//api.${location.host}/basket`, {
+      method:  "POST",
+      headers: {
+        "Authorization": localStorage.getItem("jwt") || "",
+        "Content-Type":  "application/x-www-form-urlencoded",
+      },
     })
-    .catch(err => {
-      console.log("ERR", err);
+    .then(res => res.json() as Promise<BasketCreateResponse>)
+    .then(res => {
+      if (res.code === 200) {
+        localStorage.basket = res.content.id;
+        return Promise.resolve(res.content)
+      }
+      return Promise.reject(res)
     });
   }
   
@@ -53,14 +84,22 @@ class Basket extends SingletonEntity<BasketContent> {
 interface BasketContent {
   id: string;
   user: User
-  products: {[key: string]: any}
+  products: Product[]
   flag_completed: boolean;
   flag_abandoned: boolean;
   time_created: Date;
   time_updated: Date;
 }
 
-interface BasketGetByIdResponse extends AppResponse {
+interface BasketFindLastResponse extends Response {
+  content: BasketContent
+}
+
+interface BasketFindByIdResponse extends Response {
+  content: BasketContent
+}
+
+interface BasketCreateResponse extends Response {
   content: BasketContent
 }
 

@@ -1,29 +1,63 @@
-import App, {Container} from "next/app";
+import App, {AppProps, Container} from "next/app";
 import React from "react";
-import * as Redux from "redux";
 import io from "socket.io-client";
+import uuid from "uuid";
+import IMSC from "../../microservice-shared/typescript/typings/IMSC";
 import Basket from "../entities/Basket";
 import User from "../entities/User";
 
-class FrontendApp extends App {
+class FrontendApp extends App<Props> {
   
-  private store: Redux.Store<AppState, AppAction<AppActionTypes>> = Redux.createStore(
-    (state = {}, action) => {
-      if (action.type === "assign") return Object.assign({}, state, action.value);
-      return state;
-    },
-    {}
-  );
+  public state: GlobalState;
+  
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      ready:  false,
+      user:   new User(),
+      basket: new Basket(),
+      socket: io("ws.localhost"),
+      
+      setState: (state, callback) => this.setState(state, callback),
+    };
+  }
   
   public componentDidMount() {
-    this.store.dispatch({
-      type:  "assign",
-      value: {
-        socket: io("ws.localhost"),
-        user:   new User(),
-        basket: new Basket(),
-      },
-    });
+    if (!localStorage.jwt) return this.setState(Object.assign({}, this.state, {ready: true}));
+    return Promise.all([
+      this.state.user.login()
+      .then(res => Object.assign(this.state.user.content, res))
+      .catch(err => console.log("User error:", err)),
+    ])
+    .then(() => Promise.all([
+      this.state.basket.find()
+      .catch(err => {
+        if (err.code !== 404) return Promise.resolve(Object.assign(this.state.basket.content, {products: []}));
+        
+        return this.state.basket.create()
+        .then(res => Promise.resolve(Object.assign(this.state.basket.content, res)))
+        .catch(() => Promise.resolve(Object.assign(this.state.basket.content, {products: []})));
+      }),
+      this.state.socket.emit("message", {
+        source:     "frontend",
+        method:     "authorize",
+        target:     "websocket",
+        parameters: [this.state.socket.id, localStorage.jwt],
+        id:         uuid.v4(),
+      } as IMSC.Message<IMSC.WS.WebsocketMessage>),
+    ]))
+    .then(() => this.setState(Object.assign({}, this.state, {ready: true})));
+    
+    // this.store.dispatch({
+    //   type:  "assign",
+    //   value: {
+    //     socket: io("ws.localhost"),
+    //     user:   new User(),
+    //     basket: new Basket(),
+    //   },
+    // });
+    
+    // this.store.getState().user.login();
     
     // this.store.getState().user.login()
     // .finally(() => this.store.getState().basket.find());
@@ -40,45 +74,43 @@ class FrontendApp extends App {
   }
   
   public componentWillUnmount() {
-    this.store.getState().socket.close();
+    this.state.socket.close();
   }
   
   public render() {
     const {Component, pageProps} = this.props;
     return (
       <Container>
-        <Component store={this.store} {...pageProps}/>
+        {
+          this.state.ready
+          ? <Component globals={this.state} {...pageProps}/>
+          : <div className="loader"><img src="/static/loader.gif" alt=""/></div>
+        }
       </Container>
     );
   }
+  
 }
 
-export interface AppState {
+interface Props extends AppProps {
+
+}
+
+export interface GlobalState {
+  ready: boolean
   user: User
   basket: Basket
   socket: SocketIOClient.Socket
+  
+  setState<K extends keyof GlobalState, R extends (Pick<GlobalState, K> | GlobalState | null)>(s: ((ps: Readonly<GlobalState>, p: Readonly<Props>) => R) | R, cb?: () => void): void;
 }
 
-export interface AppResponse {
+export interface Response {
   code: number
   content: {[key: string]: any}
   time_complete: string
   time_started: string
   time_elapsed: string
-}
-
-export type AppAction<T extends AppActionTypes> =
-  T extends "assign" ? AppActionAssign :
-  AppActionBase<"refresh">
-
-export type AppActionTypes = "assign" | "refresh";
-
-interface AppActionBase<T> extends Redux.Action {
-  type: T
-}
-
-interface AppActionAssign extends AppActionBase<"assign"> {
-  value: Partial<AppState>
 }
 
 export default FrontendApp;

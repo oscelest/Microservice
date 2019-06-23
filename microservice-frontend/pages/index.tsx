@@ -1,9 +1,9 @@
+import _ from "lodash";
 import * as React from "react";
-import Redux from "redux";
 import Frame from "../components/Frame";
 import User from "../entities/User";
 import "../style.less";
-import {AppAction, AppActionTypes, AppState} from "./_app";
+import {GlobalState} from "./_app";
 
 class IndexPage extends React.Component<Props, State> {
   
@@ -11,9 +11,8 @@ class IndexPage extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: {
-        signup:       undefined,
-        signup_login: undefined,
-        login:        undefined,
+        signup: null,
+        login:  null,
       },
       signup:  {
         email:    "",
@@ -57,77 +56,98 @@ class IndexPage extends React.Component<Props, State> {
     this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: promise}), error: Object.assign({}, this.state.error, {signup: 0})}) as State);
     return promise
     .then(res => {
-      this.props.store.dispatch({type: "assign", value: {user: res}});
+      this.props.globals.setState(Object.assign(this.props.globals, Object.assign({}, this.props.globals.user, {content: res})));
       const promise = user.login(this.state.signup.password);
-      this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: undefined, signup_login: promise})}) as State);
+      this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: null, login: promise})}) as State);
       return promise;
     })
-    .then(res => this.props.store.dispatch({type: "assign", value: {user: res}}))
-    .catch(err => {
-      this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {signup: err.code})}) as State);
-    })
-    .finally(() => this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: undefined, signup_login: undefined})}) as State));
+    .then(res => this.props.globals.setState(Object.assign(this.props.globals, Object.assign({}, this.props.globals.user, {content: res}))))
+    .catch(err => this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {signup: err.code})}) as State))
+    .finally(() => this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {signup: null, login: null})}) as State));
   }
   
   private clickButtonLogin() {
-    this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {login: 0})}) as State);
-    
     const user = new User();
     user.content.email = this.state.login.email;
-    
     const promise = user.login(this.state.login.password);
-    this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {login: promise})}) as State);
+    this.setState(_.merge({}, this.state, {loading: {login: promise}, error: {login: 0}}));
     
     return promise
-    .then(res => this.props.store.dispatch({type: "assign", value: {user: res}}))
-    .catch(err => {
-      this.setState(Object.assign({}, this.state, {error: Object.assign({}, this.state.error, {login: err.code})}) as State);
+    .then(res => {
+      this.props.globals.setState(_.merge(this.props.globals, {user: {content: res}} as GlobalState));
+      return this.props.globals.basket.find()
+      .then(res => this.props.globals.setState(_.merge(this.props.globals, {basket: {content: res}} as GlobalState)))
+      .catch(err => {
+        if (err.code !== 404) return Promise.resolve(null);
+        return this.props.globals.basket.findLast();
+      })
+      .then(res => this.props.globals.setState(_.merge(this.props.globals, {basket: {content: res}} as GlobalState)))
+      .catch(err => {
+        if (err.code !== 404) return Promise.resolve(null);
+        return this.props.globals.basket.create();
+      })
+      .then(res => this.props.globals.setState(_.merge(this.props.globals, {basket: {content: res}} as GlobalState)))
+      .catch(() => Promise.resolve(null));
     })
-    .finally(() => this.setState(Object.assign({}, this.state, {loading: Object.assign({}, this.state.loading, {login: undefined})}) as State));
+    .catch(err => this.setState(_.merge({}, this.state, {error: {login: err.code}} as State)))
+    .finally(() => this.setState(_.merge({}, this.state, {loading: {login: null}} as State)));
   }
   
   public render() {
     return (
-      <Frame title="Home | Webshop" user={this.props.store.getState().user}>
+      <Frame title="Home | Webshop" globals={this.props.globals}>
         <h1>Welcome to the webshop</h1>
-        <div id="presentation">
-          <div id="signup">
-            <h2>If you are not signed up, then you can do so by using the form below:</h2>
+        {this.props.globals.user.content.id
+         ?
+         <div id="reception">
+           <div>Test</div>
+         </div>
+         :
+         <div id="introduction">
+           <div id="signup">
+             <h2>If you are not signed up, then you can do so by using the form below:</h2>
             
-            {this.state.error.signup ? <span>{this.state.error.signup}</span> : ''}
+             {this.state.error.signup ? <span>{this.state.error.signup}</span> : ""}
             
-            <label htmlFor="signup_email">Email</label>
-            <input type="text" id="signup_email" formTarget="email" value={this.state.signup.email || ""} onChange={this.changeInputSignup}
-                   disabled={!!(this.state.loading.signup || this.state.loading.signup_login)}/>
+             <label htmlFor="signup_email">Email</label>
+             <input type="email" id="signup_email" formTarget="email" value={this.state.signup.email || ""} onChange={this.changeInputSignup} autoComplete="off"
+                    disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
             
-            <label htmlFor="signup_username">Username</label>
-            <input type="text" id="signup_username" formTarget="username" value={this.state.signup.username || ""} onChange={this.changeInputSignup}
-                   disabled={!!(this.state.loading.signup || this.state.loading.signup_login)}/>
+             <label htmlFor="signup_username">Username</label>
+             <input type="text" id="signup_username" formTarget="username" value={this.state.signup.username || ""} onChange={this.changeInputSignup} autoComplete="off"
+                    disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
             
-            <label htmlFor="signup_password">Password</label>
-            <input type="password" id="signup_password" formTarget="password" value={this.state.signup.password || ""} onChange={this.changeInputSignup}
-                   disabled={!!(this.state.loading.signup || this.state.loading.signup_login)}/>
+             <label htmlFor="signup_password">Password</label>
+             <input type="password" id="signup_password" formTarget="password" value={this.state.signup.password || ""} onChange={this.changeInputSignup} autoComplete="new-password"
+                    disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
             
-            <label htmlFor="signup_confirm">Confirm Password</label>
-            <input type="password" id="signup_confirm" formTarget="confirm" value={this.state.signup.confirm || ""} onChange={this.changeInputSignup}
-                   disabled={!!(this.state.loading.signup || this.state.loading.signup_login)}/>
+             <label htmlFor="signup_confirm">Confirm Password</label>
+             <input type="password" id="signup_confirm" formTarget="confirm" value={this.state.signup.confirm || ""} onChange={this.changeInputSignup} autoComplete="new-password"
+                    disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
             
-            <button onClick={this.clickButtonSignup}>Signup</button>
-          </div>
-          <div id="login">
-            <h2>... or if you're already a customer, you can log in here:</h2>
-  
-            {this.state.error.login ? <span>{this.state.error.login}</span> : ''}
+             <button onClick={this.clickButtonSignup} disabled={!!(this.state.loading.signup || this.state.loading.login)}>Signup</button>
             
-            <label htmlFor="login_email">Email</label>
-            <input type="text" id="login_email" formTarget="email" value={this.state.login.email || ""} onChange={this.changeInputLogin} disabled={!!this.state.loading.login}/>
+             {!!this.state.loading.signup && <div className="loader"><img src="/static/loader.gif" alt=""/></div>}
+           </div>
+           <div id="login">
+             <h2>... or if you're already a customer, you can log in here:</h2>
             
-            <label htmlFor="login_password">Password</label>
-            <input type="password" id="login_password" formTarget="password" value={this.state.login.password || ""} onChange={this.changeInputLogin} disabled={!!this.state.loading.login}/>
+             {this.state.error.login ? <span>{this.state.error.login}</span> : ""}
             
-            <button onClick={this.clickButtonLogin}>Login</button>
-          </div>
-        </div>
+             <label htmlFor="login_email">Email</label>
+             <input type="email" id="login_email" formTarget="email" value={this.state.login.email || ""} autoComplete="username"
+                    onChange={this.changeInputLogin} disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
+            
+             <label htmlFor="login_password">Password</label>
+             <input type="password" id="login_password" formTarget="password" value={this.state.login.password || ""} autoComplete="current-password"
+                    onChange={this.changeInputLogin} disabled={!!(this.state.loading.signup || this.state.loading.login)}/>
+            
+             <button onClick={this.clickButtonLogin} disabled={!!(this.state.loading.signup || this.state.loading.login)}>Login</button>
+            
+             {!!this.state.loading.login && <div className="loader"><img src="/static/loader.gif" alt=""/></div>}
+           </div>
+         </div>
+        }
       </Frame>
     );
   }
@@ -150,9 +170,8 @@ interface State {
 }
 
 interface StateLoading {
-  signup?: Promise<any>
-  signup_login?: Promise<any>
-  login?: Promise<any>
+  signup?: Promise<any> | null
+  login?: Promise<any> | null
 }
 
 interface StateErrors {
@@ -161,7 +180,7 @@ interface StateErrors {
 }
 
 interface Props {
-  store: Redux.Store<AppState, AppAction<AppActionTypes>>
+  globals: GlobalState
 }
 
 export default IndexPage;

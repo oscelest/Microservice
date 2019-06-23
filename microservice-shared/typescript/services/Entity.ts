@@ -16,7 +16,7 @@ class Entity {
   }
   
   public static bufferFromUUID(id: string | Buffer) {
-    return id instanceof Buffer ? id : (Entity.isUUID(id) ? Buffer.from(id.replace(/-/g, ""), "hex") : Buffer.from(id, "ascii"));
+    return id instanceof Buffer ? id : (Entity.isUUID(id) ? Buffer.from((id || "").replace(/-/g, ""), "hex") : Buffer.from((id || ""), "ascii"));
   }
   
   public static uuidFromBuffer(buffer: string | Buffer) {
