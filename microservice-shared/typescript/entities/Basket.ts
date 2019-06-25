@@ -30,10 +30,11 @@ class Basket extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {eager: true})
+  @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {eager: true, nullable: false})
   public products: BasketProduct[];
   
-  @TypeORM.ManyToOne(type => User, user => user.baskets, {cascade: true, eager: true})
+  @TypeORM.ManyToOne(type => User, user => user.baskets, {cascade: true, eager: true, nullable: true})
+  @TypeORM.JoinColumn({name: "user"})
   public user: User;
   
   /* Column Initialization */
@@ -97,25 +98,23 @@ class Basket extends Entity {
   
   public static async update(request: Endpoint.Request<object, Basket.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      const repoBasket = TypeORM.getRepository(Basket);
+      const repoUser = TypeORM.getRepository(User);
+      const basket = await repoBasket.findOne({id: response.locals.params.id});
       if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
       if (request.body.user) {
-        const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}, relations: ["baskets"]}) || null;
-        console.log(user);
-        user.baskets.push(basket);
-        console.log(user);
-        const t = await Environmental.db_manager.save(User, user);
-        console.log(t);
-        basket.user = t;
-        
-        // basket.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}}) || null;
-        // console.log()
+        const user = await repoUser.findOneOrFail({id: Entity.bufferFromUUID(request.body.user)});
+        const user_id = Entity.hexFromBuffer(user.id);
+        const basket_id = Entity.hexFromBuffer(response.locals.params.id);
+        await Environmental.db_connection.query(`UPDATE \`basket\` SET \`user\` = ${user_id}, \`time_updated\` = CURRENT_TIMESTAMP WHERE \`id\` = ${basket_id}`);
+        basket.user = user;
       }
       if (request.body.flag_abandoned) basket.flag_abandoned = request.body.flag_abandoned;
       if (request.body.flag_completed) basket.flag_completed = request.body.flag_completed;
-      // console.log(basket);
       
-      new Response(Response.Code.OK, (await Environmental.db_manager.save(basket)).toJSON()).Complete(response);
+      console.log(basket);
+      
+      new Response(Response.Code.OK, (await repoBasket.save(basket)).toJSON()).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);

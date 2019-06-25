@@ -23,6 +23,14 @@ class Entity {
     return typeof buffer === "string" ? buffer : (_.join(_.tail(buffer.toString("hex").match(/([a-f0-9]{8})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{12})/)), "-"));
   }
   
+  public static hexFromUUID(uuid: string) {
+    return `0x${uuid.replace(/-/g, "")}`;
+  }
+  
+  public static hexFromBuffer(buffer: Buffer) {
+    return `0x${buffer.toString('hex')}`;
+  }
+  
 }
 
 namespace Entity {
