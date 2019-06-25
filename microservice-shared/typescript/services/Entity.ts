@@ -3,7 +3,7 @@ import _ from "lodash";
 class Entity {
   
   public toJSON(): Partial<{ [K in keyof this]: this[K] }> {
-    return _.mapValues(this, (v: any) => {
+    return _.mapValues(this, (v: any, k) => {
       if (v instanceof Buffer) {
         if ((v = v.toString("hex")).length === 32) return v.replace(/(?<=^(?:.{8}|.{12}|.{16}|.{20}))/g, "-");
       }

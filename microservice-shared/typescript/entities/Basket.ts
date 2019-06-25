@@ -30,12 +30,10 @@ class Basket extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToMany(type => BasketProduct, product => product.basket)
-  @TypeORM.JoinColumn({name: "products"})
+  @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {eager: true})
   public products: BasketProduct[];
   
-  @TypeORM.ManyToOne(type => User, user => user.baskets)
-  @TypeORM.JoinColumn({name: "user"})
+  @TypeORM.ManyToOne(type => User, user => user.baskets, {cascade: true, eager: true})
   public user: User;
   
   /* Column Initialization */
@@ -99,13 +97,25 @@ class Basket extends Entity {
   
   public static async update(request: Endpoint.Request<object, Basket.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
+      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
       if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
-      if (request.body.user) basket.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}}) || null;
+      if (request.body.user) {
+        const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}, relations: ["baskets"]}) || null;
+        console.log(user);
+        user.baskets.push(basket);
+        console.log(user);
+        const t = await Environmental.db_manager.save(User, user);
+        console.log(t);
+        basket.user = t;
+        
+        // basket.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}}) || null;
+        // console.log()
+      }
       if (request.body.flag_abandoned) basket.flag_abandoned = request.body.flag_abandoned;
       if (request.body.flag_completed) basket.flag_completed = request.body.flag_completed;
-      await Environmental.db_manager.save(Object.assign(basket, request.body));
-      new Response(Response.Code.OK, basket.toJSON()).Complete(response);
+      // console.log(basket);
+      
+      new Response(Response.Code.OK, (await Environmental.db_manager.save(basket)).toJSON()).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
@@ -148,7 +158,7 @@ namespace Basket {
   }
   
   export interface UpdateRequestBody {
-    user: Buffer
+    user: string
     flag_abandoned: boolean
     flag_completed: boolean
   }

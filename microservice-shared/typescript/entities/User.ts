@@ -47,7 +47,6 @@ class User extends Entity {
   /* Relations - Outgoing */
   
   @TypeORM.OneToMany(type => Basket, basket => basket.user)
-  @TypeORM.JoinTable()
   public baskets: Basket[];
   
   /* Relations - Incoming */
@@ -71,7 +70,7 @@ class User extends Entity {
   }
   
   public toJSON(): Partial<{ [K in keyof this]: this[K] }> {
-    return _.pick(super.toJSON(), ["id", "username", "level", "email", "time_created"]) as Partial<{ [K in keyof this]: this[K] }>;
+    return _.pick(super.toJSON(), ["id", "username", "level", "email", "time_created", "time_login"]) as Partial<{ [K in keyof this]: this[K] }>;
   }
   
   public validatePassword(password: string): boolean {

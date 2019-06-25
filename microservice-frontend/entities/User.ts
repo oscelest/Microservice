@@ -1,4 +1,5 @@
 import Entity, {EntityObject, JSONResponse} from "../services/Entity";
+import Basket from "./Basket";
 
 class User extends Entity {
   
@@ -38,9 +39,11 @@ class User extends Entity {
       if (res.code === 200) return res.content;
       throw res;
     })
-    .finally(() => delete User.Loading.signup));
+    .finally(() => User.Loading.signup = null));
   }
   
+  public static async login(): Promise<EntityObject<User>>
+  public static async login(email: string, password: string): Promise<EntityObject<User>>
   public static async login(email?: string, password?: string): Promise<EntityObject<User>> {
     return await (User.Loading.login = fetch(`${location.protocol}//api.${location.host}/user/login`, {
       method:  "POST",
@@ -49,7 +52,7 @@ class User extends Entity {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
-      body:    `email=${encodeURIComponent(email || "")}&password=${encodeURIComponent(password || "")}`,
+      body:    email && password && `email=${encodeURIComponent(email || "")}&password=${encodeURIComponent(password || "")}`,
     })
     .then(async res => await res.json() as JSONResponse<{jwt: string, object: EntityObject<User>}>)
     .then(async res => {
@@ -59,10 +62,23 @@ class User extends Entity {
       }
       throw res;
     })
-    .finally(() => delete User.Loading.signup));
+    .finally(() => User.Loading.login = null));
   }
   
   public static logout(): void {
+    User.Instance.id = "";
+    User.Instance.email = "";
+    User.Instance.username = "";
+    User.Instance.level = 0;
+    User.Instance.time_created = new Date(0);
+    User.Instance.time_login = new Date(0);
+    Basket.Instance.id = "";
+    Basket.Instance.products = [];
+    Basket.Instance.user = null as any;
+    Basket.Instance.flag_abandoned = false;
+    Basket.Instance.flag_completed = false;
+    Basket.Instance.time_created = new Date(0);
+    Basket.Instance.time_updated = new Date(0);
     localStorage.removeItem("jwt");
     localStorage.removeItem("basket");
   }

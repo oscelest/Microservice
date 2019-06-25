@@ -185,11 +185,13 @@ class Endpoint<Q extends object, B extends object, P extends object> {
           return value.match(/^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])[a-zA-Z0-9@%+\\\/'!#$^?:.(){}[\]~\-_,]{8,}$/) ? result : _.set(result, key, null);
         }
         if (parameters[key].type === "uuid") {
-          return _.set(result, key, Entity.isUUID(value) ? Entity.bufferFromUUID(value) : null);
+          const parameter = (parameters[key] || {}) as Endpoint.Parameter<"uuid">;
+          return _.set(result, key, Entity.isUUID(value) ? (parameter.convert === false ? value : Entity.bufferFromUUID(value)) : null);
         }
         if (parameters[key].type === "timestamp") {
+          const parameter = (parameters[key] || {}) as Endpoint.Parameter<"timestamp">;
           const date = new Date(value);
-          return _.set(result, key, !isNaN(date.getTime()) ? date : null);
+          return _.set(result, key, !isNaN(date.getTime()) ? (parameter.convert === false ? value : date) : null);
         }
       }
       return result;
@@ -222,6 +224,7 @@ namespace Endpoint {
   export type Parameter<T extends ParameterType> =
     T extends "string" ? ParameterObject<"string"> & {min_length?: number, max_length?: number} :
     T extends "number" ? ParameterObject<"number"> & {min_value?: number, max_value?: number} :
+    T extends "uuid" | "timestamp" ? ParameterObject<"uuid" | "timestamp"> & {convert?: boolean} :
     ParameterObject<T>;
   
   export interface ParameterObject<T extends ParameterType> {

@@ -31,11 +31,11 @@ class LoginForm extends React.Component<Props, State> {
       this.props.globals.setState(this.props.globals);
       new User(await User.login(this.state.input.email, this.state.input.password));
       localStorage.basket ? await Basket.findCurrent() || await Basket.findLast() : await Basket.findLast();
-      this.props.globals.setState(this.props.globals);
     }
     catch (exception) {
       this.setState(_.merge(this.state, {error: exception.code}));
     }
+    this.props.globals.setState(this.props.globals);
   }
   
   public render() {

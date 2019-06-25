@@ -14,7 +14,7 @@ class Basket extends Entity {
   public time_created: Date;
   public time_updated: Date;
   
-  public static Instance: Basket = new Basket({id: "", user: User.Instance, products: [], flag_abandoned: false, flag_completed: false, time_created: new Date(0), time_updated: new Date(0)});
+  public static Instance: Basket = new Basket({id: "", user: null as any, products: [], flag_abandoned: false, flag_completed: false, time_created: new Date(0), time_updated: new Date(0)});
   
   constructor(object: EntityObject<Basket>) {
     super();
@@ -100,23 +100,29 @@ class Basket extends Entity {
           "Authorization": localStorage.getItem("jwt") || "",
           "Content-Type":  "application/x-www-form-urlencoded",
         },
-        body:    `${Basket.Instance.user ? `user=${Basket.Instance.user.id}&` : ''}flag_completed=${Basket.Instance.flag_completed}&flag_abandoned=${Basket.Instance.flag_abandoned}`,
+        body:    `${User.Instance.id ? `user=${User.Instance.id}&` : ''}flag_completed=${Basket.Instance.flag_completed}&flag_abandoned=${Basket.Instance.flag_abandoned}`,
       });
-      Basket.Instance.products.forEach(async v => {
-        try {
-          await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}/product`, {
-            method:  "POST",
-            headers: {
-              "Authorization": localStorage.getItem("jwt") || "",
-              "Content-Type":  "application/x-www-form-urlencoded",
-            },
-            body:    `quantity=${v.quantity}&product=${v.product.id}`,
-          });
-        }
-        catch (e) {
-          console.log("ERROR INNER", e)
-        }
-      });
+      await Promise.all(Basket.Instance.products.map(async v => {
+        return console.log(v);
+      }))
+      
+      // await Basket.Instance.products.forEach(async v => {
+      //   console.log("what?")
+      //   try {
+      //     console.log("fetching something glorious", v);
+      //     await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}/product`, {
+      //       method:  "POST",
+      //       headers: {
+      //         "Authorization": localStorage.getItem("jwt") || "",
+      //         "Content-Type":  "application/x-www-form-urlencoded",
+      //       },
+      //       body:    `quantity=${v.quantity}&product=${v.product.id}`,
+      //     });
+      //   }
+      //   catch (e) {
+      //     console.log("ERROR INNER", e)
+      //   }
+      // });
     }
     catch (e) {
       console.log("ERROR OUTER", e)
@@ -129,27 +135,6 @@ class Basket extends Entity {
     const basket_product = Basket.findBasketProduct(product.id) || new BasketProduct({id: uuid.v4(), quantity: quantity, product: product, time_created: new Date(), time_updated: new Date()});
     basket_product ? (basket_product.quantity = quantity) : Basket.Instance.products.push(basket_product);
     return await Basket.update();
-    // try {
-    //
-    // }
-    // catch (e) {
-    //
-    //
-    //   console.error("Couldn't create basket", e);
-    // }
-    // return await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}/product`, {
-    //   method:  "POST",
-    //   headers: {
-    //     "Authorization": localStorage.getItem("jwt") || "",
-    //     "Content-Type":  "application/x-www-form-urlencoded",
-    //   },
-    //   body:    `product=${product.id}&quantity=${quantity}`,
-    // })
-    // .then(async res => await res.json() as JSONResponse<EntityObject<BasketProduct>>)
-    // .then(async res => {
-    //   if (res.code === 200) return new BasketProduct(res.content);
-    //   throw res;
-    // });
   }
   
   

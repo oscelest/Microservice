@@ -24,10 +24,8 @@ class ProductsPage extends React.Component<Props, State> {
   
   private async clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
     e.preventDefault();
-    // const basket_product = Basket.findBasketProduct(product.id) || new BasketProduct({id: uuid.v4(), quantity: 1, product: product, time_created: new Date(), time_updated: new Date()});
-    // basket_product ? basket_product.quantity++ : Basket.Instance.products.push(basket_product);
     try {
-      await Basket.setProduct(product, 1);
+      await Basket.setProduct(product, (Basket.findBasketProduct(product.id) || {quantity: 0}).quantity + 1);
     }
     catch (exception) {
       console.error("addProductError", exception);

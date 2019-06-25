@@ -13,10 +13,10 @@ class FrontendApp extends App<Props> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      ready:  false,
-      user:   User.Instance,
-      basket: Basket.Instance,
-      socket: io("ws.localhost"),
+      ready:    false,
+      user:     User.Instance,
+      basket:   Basket.Instance,
+      socket:   io("ws.localhost"),
       setState: (state, callback) => this.setState(state, callback),
     };
   }
@@ -47,6 +47,7 @@ class FrontendApp extends App<Props> {
     this.setState(Object.assign(this.state, {ready: true}));
     
     console.log(this.state);
+    console.log(User.Loading);
   }
   
   public componentWillUnmount() {

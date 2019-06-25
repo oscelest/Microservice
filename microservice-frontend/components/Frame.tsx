@@ -13,7 +13,7 @@ class Frame extends React.Component<Props, State> {
   
   private clickButtonLogout() {
     User.logout();
-    this.props.globals.setState(this.props.globals);
+    this.props.globals.setState(Object.assign(this.props.globals, {user: User.Instance}));
   }
   
   public render() {
