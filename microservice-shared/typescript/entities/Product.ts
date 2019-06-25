@@ -6,6 +6,7 @@ import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
+import BasketProduct from "./BasketProduct";
 
 @TypeORM.Entity()
 @TypeORM.Unique("key", ["key"])
@@ -38,9 +39,10 @@ class Product extends Entity {
   @TypeORM.UpdateDateColumn()
   public readonly time_updated: Date;
   
-  /* Relations - Outgoing */
+  /* Relations */
   
-  /* Relations - Incoming */
+  @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product)
+  baskets: BasketProduct[];
   
   /* Column Initialization */
   

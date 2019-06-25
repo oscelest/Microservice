@@ -57,15 +57,18 @@ Promise.props({
         
         const request = packet[1];
         const method = WebsocketMethods[request.target][request.method] as Function;
-        const response: IMSC.Message<any> = method.apply(null, request.parameters);
+        const response: IMSC.Message<any> = method.apply(request, request.parameters);
         
-        if (response.target === "frontend") {
+        if (response instanceof Response) {
+          socket.emit("exception", response);
+        }
+        else if (response.target === "frontend") {
           socket.emit("message", response);
         }
         else {
           WebsocketMethods.requests[request.id] = {
             message: request,
-            socket: socket.id,
+            socket:  socket.id,
             timeout: setTimeout(() => {
               socket.emit("exception", {code: 504, message: WebsocketMethods.requests[request.id].message});
               delete WebsocketMethods.requests[request.id].message;
@@ -77,7 +80,7 @@ Promise.props({
         next();
       }
       catch (e) {
-        socket.emit("error", new Response(200, e));
+        socket.emit("exception", new Response(200, e));
         next();
       }
     });

@@ -6,6 +6,7 @@ import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
+import BasketProduct from "./BasketProduct";
 import Product from "./Product";
 import User from "./User";
 
@@ -27,13 +28,11 @@ class Basket extends Entity {
   @TypeORM.UpdateDateColumn()
   public readonly time_updated: Date;
   
-  /* Relations - Outgoing */
+  /* Relations */
   
-  @TypeORM.ManyToMany(type => Product)
-  @TypeORM.JoinTable()
-  public products: Product[];
-  
-  /* Relations - Incoming */
+  @TypeORM.OneToMany(type => BasketProduct, product => product.basket)
+  @TypeORM.JoinColumn({name: "products"})
+  public products: BasketProduct[];
   
   @TypeORM.ManyToOne(type => User, user => user.baskets)
   @TypeORM.JoinColumn({name: "user"})
@@ -100,10 +99,34 @@ class Basket extends Entity {
   
   public static async update(request: Endpoint.Request<object, Basket.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const user = await Environmental.db_manager.findOne(this, response.locals.params);
-      if (!user) return new Response(Response.Code.NotFound, request.body).Complete(response);
-      await Environmental.db_manager.save(Object.assign(user, request.body));
-      new Response(Response.Code.OK, user.toJSON()).Complete(response);
+      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
+      if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
+      if (request.body.user) basket.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(request.body.user)}}) || null;
+      if (request.body.flag_abandoned) basket.flag_abandoned = request.body.flag_abandoned;
+      if (request.body.flag_completed) basket.flag_completed = request.body.flag_completed;
+      await Environmental.db_manager.save(Object.assign(basket, request.body));
+      new Response(Response.Code.OK, basket.toJSON()).Complete(response);
+    }
+    catch (e) {
+      new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
+    }
+  }
+  
+  public static async setProduct(request: Endpoint.Request<object, Basket.SetProductRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
+    try {
+      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      if (!basket) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
+      const product = await Environmental.db_manager.findOne(Product, {where: {id: Entity.bufferFromUUID(request.body.product)}});
+      if (!product) return new Response(Response.Code.NotFound, {product: request.body.product}).Complete(response);
+      if (product.stock < request.body.quantity) return new Response(Response.Code.BadRequest, {stock: product.stock, quantity: request.body.quantity}).Complete(response);
+      const basket_product = await Environmental.db_manager.findOne(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}, relations: ["product"]}) || new BasketProduct();
+      if (!basket_product.id) {
+        basket_product.basket = basket;
+        basket_product.product = product;
+      }
+      basket_product.quantity = request.body.quantity;
+      await Environmental.db_manager.save(basket_product);
+      new Response(Response.Code.OK, basket_product.toJSON()).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
@@ -125,10 +148,14 @@ namespace Basket {
   }
   
   export interface UpdateRequestBody {
-    id: Buffer
     user: Buffer
     flag_abandoned: boolean
     flag_completed: boolean
+  }
+  
+  export interface SetProductRequestBody {
+    product: string
+    quantity: number
   }
   
 }

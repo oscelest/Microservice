@@ -1,6 +1,7 @@
 import Link from "next/link";
 import * as React from "react";
 import Frame from "../components/Frame";
+import Basket from "../entities/Basket";
 import Product from "../entities/Product";
 import "../style.less";
 import {GlobalState} from "./_app";
@@ -21,14 +22,20 @@ class ProductsPage extends React.Component<Props, State> {
     this.setState(Object.assign(this.state, {product_promise: promise}));
   }
   
-  private clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
+  private async clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
     e.preventDefault();
-    this.props.globals.basket.content.products.push(product);
+    // const basket_product = Basket.findBasketProduct(product.id) || new BasketProduct({id: uuid.v4(), quantity: 1, product: product, time_created: new Date(), time_updated: new Date()});
+    // basket_product ? basket_product.quantity++ : Basket.Instance.products.push(basket_product);
+    try {
+      await Basket.setProduct(product, 1);
+    }
+    catch (exception) {
+      console.error("addProductError", exception);
+    }
+    this.props.globals.setState(this.props.globals);
   }
   
   private changeInput(event: React.ChangeEvent<HTMLInputElement>) {
-    console.log(event.target.id);
-    console.log(event.target.value);
     this.setState(Object.assign(this.state, {[event.target.id]: event.target.value}));
   }
   
@@ -37,14 +44,14 @@ class ProductsPage extends React.Component<Props, State> {
       <Frame title="Products | Webshop" globals={this.props.globals}>
         <div id="products">
           {this.state.products.map((v, k) => {
-            console.log(k, v);
+            // console.log(k, v);
             return (
               <Link href="/" key={k}>
                 <div className="product">
-                  <span className="title">{v.content.title}</span>
-                  <span className="stock">{v.content.stock} left in stock</span>
-                  <img src={v.content.image} alt={v.content.description}/>
-                  <span className="price">{v.content.price / 100} DKK</span>
+                  <span className="title">{v.title}</span>
+                  <span className="stock">{v.stock} left in stock</span>
+                  <img src={v.image} alt={v.description}/>
+                  <span className="price">{v.price / 100} DKK</span>
                   <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
                 </div>
               </Link>

@@ -50,7 +50,6 @@ new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/last", Endpoint.Metho
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-
 new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Method.POST, [
   (request, response) => rp({
     method: "POST",
@@ -66,18 +65,41 @@ new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Metho
 
 new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:id", Endpoint.Method.PUT, [
   Endpoint.bodyFields({
-    key:         {type: "string", min_length: 4, max_length: 128, optional: true},
-    title:       {type: "string", min_length: 4, max_length: 255, optional: true},
-    description: {type: "string", optional: true},
-    image:       {type: "string", optional: true},
-    price:       {type: "number", optional: true},
+    user:           {type: "uuid", optional: true},
+    flag_abandoned: {type: "boolean", optional: true},
+    flag_completed: {type: "boolean", optional: true},
   }),
+  (request, response, next) => rp({
+    method: "GET",
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
+    json:   true,
+  })
+  .then(res => res.user && res.user.id !== Entity.uuidFromBuffer(response.locals.user.id) ? new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response) : next())
+  .catch(err => response.status(err.response.statusCode).json(err.response.body)),
   (request, response) => rp({
     method: "PUT",
-    url:    `http://basket:${process.env.PORT}`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
     json:   true,
     body:   request.body,
   })
-  .then(res => response.json(res))
+  .then(res => new Response(Response.Code.OK, res.content).Complete(response))
+  .catch(err => response.status(err.response.statusCode).json(err.response.body)),
+]);
+
+new Endpoint<object, Basket.SetProductRequestBody, Endpoint.UUIDLocals>("/basket/:id/product", Endpoint.Method.POST, [
+  Endpoint.bodyFields({
+    quantity: {type: "number", min_value: 1, optional: true},
+    product:  {type: "uuid"},
+  }),
+  (request, response) => rp({
+    method: "POST",
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}/product`,
+    json:   true,
+    body:   {
+      product:  request.body.product,
+      quantity: request.body.quantity,
+    },
+  })
+  .then(res => new Response(Response.Code.OK, res.content).Complete(response))
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);

@@ -14,38 +14,39 @@ class FrontendApp extends App<Props> {
     super(props);
     this.state = {
       ready:  false,
-      user:   new User(),
-      basket: new Basket(),
+      user:   User.Instance,
+      basket: Basket.Instance,
       socket: io("ws.localhost"),
-      
       setState: (state, callback) => this.setState(state, callback),
     };
   }
   
-  public componentDidMount() {
-    if (!localStorage.jwt) return this.setState(Object.assign({}, this.state, {ready: true}));
-    return Promise.all([
-      this.state.user.login()
-      .then(res => Object.assign(this.state.user.content, res))
-      .catch(() => this.state.user.logout()),
-    ])
-    .then(() => Promise.all([
-      this.state.basket.find()
-      .catch(err => {
-        if (err.code !== 404) return Promise.resolve(Object.assign(this.state.basket.content, {products: []}));
-        return this.state.basket.create()
-        .then(res => Promise.resolve(Object.assign(this.state.basket.content, res)))
-        .catch(() => Promise.resolve(Object.assign(this.state.basket.content, {products: []})));
-      }),
-      this.state.socket.emit("message", {
-        source:     "frontend",
-        method:     "authorize",
-        target:     "websocket",
-        parameters: [this.state.socket.id, localStorage.jwt],
-        id:         uuid.v4(),
-      } as IMSC.Message<IMSC.WS.WebsocketMessage>),
-    ]))
-    .then(() => this.setState(Object.assign({}, this.state, {ready: true})));
+  public async componentDidMount() {
+    if (localStorage.jwt) {
+      try {
+        Object.assign(this.state.user, await User.login());
+        this.state.socket.emit("message", {
+          source:     "frontend",
+          method:     "authorize",
+          target:     "websocket",
+          parameters: [this.state.socket.id, localStorage.jwt],
+          id:         uuid.v4(),
+        } as IMSC.Message<IMSC.WS.WebsocketMessage>);
+      }
+      catch (e) {
+        User.Instance.id = "";
+        User.Instance.email = "";
+        User.Instance.username = "";
+        User.Instance.level = 0;
+        User.Instance.time_login = new Date(0);
+        User.Instance.time_created = new Date(0);
+        User.logout();
+      }
+    }
+    localStorage.basket ? await Basket.findCurrent() || await Basket.findLast() : await Basket.findLast();
+    this.setState(Object.assign(this.state, {ready: true}));
+    
+    console.log(this.state);
   }
   
   public componentWillUnmount() {
@@ -78,14 +79,6 @@ export interface GlobalState {
   socket: SocketIOClient.Socket
   
   setState<K extends keyof GlobalState, R extends (Pick<GlobalState, K> | GlobalState | null)>(s: ((ps: Readonly<GlobalState>, p: Readonly<Props>) => R) | R, cb?: () => void): void;
-}
-
-export interface Response {
-  code: number
-  content: {[key: string]: any}
-  time_complete: string
-  time_started: string
-  time_elapsed: string
 }
 
 export default FrontendApp;

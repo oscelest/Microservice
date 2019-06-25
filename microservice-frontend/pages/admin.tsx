@@ -4,6 +4,7 @@ import Product from "../entities/Product";
 import "../style.less";
 import {GlobalState} from "./_app";
 import _ from "lodash";
+import uuid from "uuid";
 
 class ProductsPage extends React.Component<Props, State> {
   
@@ -18,14 +19,17 @@ class ProductsPage extends React.Component<Props, State> {
   
   private clickAddProduct(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    const product = new Product();
-    product.content.key = this.state.product.key;
-    product.content.title = this.state.product.title;
-    product.content.description = this.state.product.description;
-    product.content.image = this.state.product.image;
-    product.content.price = this.state.product.price;
-    product.content.stock = this.state.product.stock;
-    return product.create()
+    return Product.create(new Product({
+      id: uuid.v4(),
+      key: this.state.product.key,
+      title: this.state.product.title,
+      description: this.state.product.description,
+      image: this.state.product.image,
+      price: this.state.product.price,
+      stock: this.state.product.stock,
+      time_created: new Date(),
+      time_updated: new Date(),
+    }))
     .then(() => this.setState(Object.assign(this.state, {product: {key: "", title: "", description: "", image: "", price: 0, stock: 0}}) as State));
   }
   

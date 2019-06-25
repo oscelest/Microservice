@@ -1,60 +1,65 @@
-import {Response} from "../pages/_app";
-import SingletonEntity from "../services/SingletonEntity";
+import Entity, {EntityObject, JSONResponse} from "../services/Entity";
 
-class User extends SingletonEntity<UserContent> {
+class User extends Entity {
   
-  constructor() {
+  public id: string;
+  public email: string;
+  public username: string;
+  public level: number;
+  public time_login: Date;
+  public time_created: Date;
+  
+  public static Instance: User = new User({id: "", email: "", username: "", level: 0, time_created: new Date(0), time_login: new Date(0)});
+  public static Loading: {login: Promise<EntityObject<User>> | null, signup: Promise<EntityObject<User>> | null} = {login: null, signup: null};
+  
+  constructor(object: EntityObject<User>) {
     super();
+    if (!User.Instance) User.Instance = this;
+    User.Instance.id = this.id = object.id;
+    User.Instance.email = this.email = object.email;
+    User.Instance.username = this.username = object.username;
+    User.Instance.level = this.level = object.level;
+    User.Instance.time_created = this.time_created = new Date(object.time_created || 0);
+    User.Instance.time_login = this.time_login = new Date(object.time_login || 0);
   }
   
-  public create(password: string): Promise<UserContent> {
-    return User.create(this, password);
-  }
-  
-  public static create(user: User, password: string): Promise<UserContent> {
-    return fetch(`${location.protocol}//api.${location.host}/user`, {
+  public static async create(email: string, username: string, password: string): Promise<EntityObject<User>> {
+    return await (User.Loading.signup = fetch(`${location.protocol}//api.${location.host}/user`, {
       method:  "POST",
       cache:   "no-cache",
       headers: {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
-      body:    `${Object.entries(user.content).map(v => `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`).join("&")}&password=${encodeURIComponent(password)}`,
+      body:    `email=${encodeURIComponent(email || "")}&username=${encodeURIComponent(username || "")}&password=${encodeURIComponent(password || "")}`,
     })
-    .then(res => res.json() as Promise<UserCreateResponse>)
-    .then(res => res.code === 200 ? Promise.resolve(res.content) : Promise.reject(res));
+    .then(async res => await res.json() as JSONResponse<EntityObject<User>>)
+    .then(async res => {
+      if (res.code === 200) return res.content;
+      throw res;
+    })
+    .finally(() => delete User.Loading.signup));
   }
   
-  public login(): Promise<UserContent>
-  public login(password: string): Promise<UserContent>
-  public login(password?: string): Promise<UserContent> {
-    return password ? User.login(this, password) : User.login();
-  }
-  
-  public static login(): Promise<UserContent>
-  public static login(user: User, password: string): Promise<UserContent>
-  public static login(user?: User, password?: string): Promise<UserContent> {
-    return fetch(`${location.protocol}//api.${location.host}/user/login`, {
+  public static async login(email?: string, password?: string): Promise<EntityObject<User>> {
+    return await (User.Loading.login = fetch(`${location.protocol}//api.${location.host}/user/login`, {
       method:  "POST",
       cache:   "no-cache",
       headers: {
         "Authorization": localStorage.getItem("jwt") || "",
         "Content-Type":  "application/x-www-form-urlencoded",
       },
-      body:    user && `${Object.entries(user.content).map(v => `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`).join("&")}&password=${encodeURIComponent(password || "")}`,
+      body:    `email=${encodeURIComponent(email || "")}&password=${encodeURIComponent(password || "")}`,
     })
-    .then(res => res.json() as Promise<UserLoginResponse>)
-    .then(res => {
+    .then(async res => await res.json() as JSONResponse<{jwt: string, object: EntityObject<User>}>)
+    .then(async res => {
       if (res.code === 200) {
         localStorage.jwt = res.content.jwt;
-        return Promise.resolve(res.content.object);
+        return res.content.object;
       }
-      return Promise.reject(res);
-    });
-  }
-  
-  public logout(): void {
-    return User.logout();
+      throw res;
+    })
+    .finally(() => delete User.Loading.signup));
   }
   
   public static logout(): void {
@@ -62,26 +67,6 @@ class User extends SingletonEntity<UserContent> {
     localStorage.removeItem("basket");
   }
   
-}
-
-export interface UserContent {
-  id: string
-  email: string
-  username: string
-  level: number
-  time_created: Date
-}
-
-interface UserCreateResponse extends Response {
-  content: UserContent
-}
-
-
-interface UserLoginResponse extends Response {
-  content: {
-    jwt: string
-    object: UserContent
-  }
 }
 
 export default User;

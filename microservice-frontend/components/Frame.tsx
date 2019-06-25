@@ -1,6 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import * as React from "react";
+import User from "../entities/User";
 import {GlobalState} from "../pages/_app";
 
 class Frame extends React.Component<Props, State> {
@@ -11,8 +12,8 @@ class Frame extends React.Component<Props, State> {
   }
   
   private clickButtonLogout() {
-    this.props.globals.user.logout();
-    this.props.globals.setState(Object.assign(this.props.globals, Object.assign(this.props.globals.user, {content: {}})));
+    User.logout();
+    this.props.globals.setState(this.props.globals);
   }
   
   public render() {
@@ -29,8 +30,8 @@ class Frame extends React.Component<Props, State> {
             <Link href='/products'><a>Products</a></Link>
           </div>
           <div id="user">
-            {this.props.globals.user.content.level > 0 ? <Link href='/admin'><a>Admin</a></Link> : ""}
-            {this.props.globals.user.content.id ? <button onClick={this.clickButtonLogout}>Logout</button> : <Link href='/login'>
+            {this.props.globals.user.level > 0 ? <Link href='/admin'><a>Admin</a></Link> : ""}
+            {this.props.globals.user.id ? <button onClick={this.clickButtonLogout}>Logout</button> : <Link href='/'>
               <button>Login</button>
             </Link>}
           </div>

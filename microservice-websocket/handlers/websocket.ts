@@ -22,19 +22,11 @@ const WebsocketMethods: IMSC.WS.MessageMethods & WebsocketData = {
         WebsocketMethods.sockets[socket_id] = {user: user};
       }
       catch (e) {
-        if (e.code) throw new Response(Response.Code.Unauthorized, {content: {Authorization: jwt}});
-        throw new Response(Response.Code.InternalServerError, {method: "authorize", target: "websocket", parameters: [socket_id, jwt]});
+        if (e.code) return new Response(Response.Code.Unauthorized, {content: {Authorization: jwt}});
+        return new Response(Response.Code.InternalServerError, {method: "authorize", target: "websocket", parameters: [socket_id, jwt]});
       }
     },
   },
-  
-  // async authorize(socket: SocketIO.Socket, auth: string): Promise<void> {
-  
-  // },
-  
-  // async basketFind(socket: SocketIO.Socket, id: string): Promise<void> {
-  //
-  // },
 };
 
 interface WebsocketData {
