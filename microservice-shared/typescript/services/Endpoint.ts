@@ -246,7 +246,6 @@ namespace Endpoint {
   }
   
   export type UUIDLocals = {
-    id: Buffer
     uuid: string
   }
   

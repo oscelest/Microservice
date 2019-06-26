@@ -1,6 +1,4 @@
-import _ from "lodash";
 import * as TypeORM from "typeorm";
-import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
 import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
@@ -12,8 +10,8 @@ import BasketProduct from "./BasketProduct";
 @TypeORM.Unique("key", ["key"])
 class Product extends Entity {
   
-  @TypeORM.PrimaryColumn({type: "binary", length: 16, readonly: true, nullable: false})
-  public readonly id: Buffer;
+  @TypeORM.PrimaryGeneratedColumn("uuid")
+  public readonly id: string;
   
   @TypeORM.Column({length: 128})
   public key: string;
@@ -44,21 +42,9 @@ class Product extends Entity {
   @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product)
   baskets: BasketProduct[];
   
-  /* Column Initialization */
-  
-  @TypeORM.BeforeInsert()
-  private beforeInsert() {
-    if (!this.id) _.set(this, "id", Buffer.from(uuid.v4().replace(/-/g, ""), "hex"));
-  }
-  
-  constructor() {
-    super();
-  }
-  
   public static async find(request: Endpoint.Request<Endpoint.FindQuery, object>, response: Endpoint.Response<object>): Promise<void> {
     try {
-      const entities = await Environmental.db_manager.find(this, Endpoint.parseFindQueryOptions(request.query));
-      new Response(Response.Code.OK, entities.map(v => v.toJSON())).Complete(response);
+      new Response(Response.Code.OK, (await Environmental.db_manager.find(this, Endpoint.parseFindQueryOptions(request.query))).map(v => v.toJSON())).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in find method on ${this.name} entity.`, e)).Complete(response);
@@ -67,7 +53,7 @@ class Product extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, response.locals.params);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
       if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
@@ -97,7 +83,7 @@ class Product extends Entity {
   
   public static async update(request: Endpoint.Request<object, Product.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, response.locals.params);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
       if (!entity) return new Response(Response.Code.NotFound, request.body).Complete(response);
       await Environmental.db_manager.save(Object.assign(entity, request.body));
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);

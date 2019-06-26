@@ -5,7 +5,6 @@ import "reflect-metadata";
 import * as TypeORM from "typeorm";
 import Directory from "../microservice-shared/typescript/services/Directory";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
-import Entity from "../microservice-shared/typescript/services/Entity";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 
 Promise.props({
@@ -24,8 +23,7 @@ Promise.props({
 })
 .then(async dependencies => {
   
-  Endpoint.setURLParameter("id", 0, (request, response: Endpoint.Response<{id: Buffer, uuid: string}>, next, id: string) => {
-    response.locals.params.id = Entity.bufferFromUUID(id);
+  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<{id: Buffer, uuid: string}>, next, id: string) => {
     response.locals.params.uuid = id;
     next();
   });

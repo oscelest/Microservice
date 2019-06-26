@@ -20,7 +20,7 @@ new Endpoint<Endpoint.FindQuery, object, object>("/product", Endpoint.Method.GET
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-new Endpoint<object, object, Endpoint.UUIDLocals>("/product/:id", Endpoint.Method.GET, [
+new Endpoint<object, object, Endpoint.UUIDLocals>("/product/:uuid", Endpoint.Method.GET, [
   (request, response) => {
     console.log(request.body);
     console.log(response.locals);
@@ -46,7 +46,7 @@ new Endpoint<object, Product.CreateRequestBody, object>("/product", Endpoint.Met
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-new Endpoint<object, Product.UpdateRequestBody, Endpoint.UUIDLocals>("/product/:id", Endpoint.Method.PUT, [
+new Endpoint<object, Product.UpdateRequestBody, Endpoint.UUIDLocals>("/product/:uuid", Endpoint.Method.PUT, [
   Endpoint.bodyFields({
     key:         {type: "string", min_length: 4, max_length: 128, optional: true},
     title:       {type: "string", min_length: 4, max_length: 255, optional: true},

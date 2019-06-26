@@ -23,8 +23,7 @@ Promise.props({
 })
 .then(async dependencies => {
   
-  Endpoint.setURLParameter("id", 0, (request, response: Endpoint.Response< {id: Buffer, uuid: string}>, next, id: string) => {
-    response.locals.params.id = Entity.bufferFromUUID(id);
+  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response< {id: Buffer, uuid: string}>, next, id: string) => {
     response.locals.params.uuid = id;
     next();
   });

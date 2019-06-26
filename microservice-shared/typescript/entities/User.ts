@@ -2,7 +2,6 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import _ from "lodash";
 import * as TypeORM from "typeorm";
-import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
 import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
@@ -14,8 +13,8 @@ import Basket from "./Basket";
 @TypeORM.Unique("email", ["email"])
 class User extends Entity {
   
-  @TypeORM.PrimaryColumn({type: "binary", length: 16, readonly: true, nullable: false})
-  public readonly id: Buffer;
+  @TypeORM.PrimaryGeneratedColumn("uuid")
+  public readonly id: string;
   
   @TypeORM.Column({length: 64})
   public username: string;
@@ -33,7 +32,7 @@ class User extends Entity {
   public readonly salt: Buffer;
   
   @TypeORM.Column({type: "binary", length: 16})
-  public secret: Buffer;
+  public secret: Buffer  = crypto.randomBytes(16);
   
   @TypeORM.Column({nullable: true})
   public readonly time_login: Date;
@@ -50,19 +49,6 @@ class User extends Entity {
   public baskets: Basket[];
   
   /* Relations - Incoming */
-  
-  /* Column Initialization */
-  
-  @TypeORM.BeforeInsert()
-  private beforeInsert() {
-    if (!this.id) _.set(this, "id", Buffer.from(uuid.v4().replace(/-/g, ""), "hex"));
-    if (!this.secret) this.secret = crypto.randomBytes(16);
-  }
-  
-  constructor(id?: string | Buffer) {
-    super();
-    if (id) this.id = typeof id === "string" ? Entity.bufferFromUUID(id) : id;
-  }
   
   public set password(password: string) {
     _.set(this, "salt", crypto.randomBytes(128));
@@ -150,11 +136,6 @@ namespace User {
   export type LoginRequestBody = {
     email: string
     password: string
-  }
-  
-  export type LoginResponse = {
-    jwt: string;
-    object: any
   }
 }
 

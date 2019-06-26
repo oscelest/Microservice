@@ -21,7 +21,7 @@ new Endpoint<Endpoint.FindQuery, object, object>("/basket", Endpoint.Method.GET,
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/:id", Endpoint.Method.GET, [
+new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/:uuid", Endpoint.Method.GET, [
   (request, response) => rp({
     method: "GET",
     url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
@@ -63,7 +63,7 @@ new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Metho
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:id", Endpoint.Method.PUT, [
+new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:uuid", Endpoint.Method.PUT, [
   Endpoint.bodyFields({
     user:           {type: "uuid", optional: true, convert: false},
     flag_abandoned: {type: "boolean", optional: true},
@@ -87,7 +87,7 @@ new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:id
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
 ]);
 
-new Endpoint<object, Basket.SetProductRequestBody, Endpoint.UUIDLocals>("/basket/:id/product", Endpoint.Method.POST, [
+new Endpoint<object, Basket.SetProductRequestBody, Endpoint.UUIDLocals>("/basket/:uuid/product", Endpoint.Method.POST, [
   Endpoint.bodyFields({
     quantity: {type: "number", min_value: 1, optional: true},
     product:  {type: "uuid", convert: false},
