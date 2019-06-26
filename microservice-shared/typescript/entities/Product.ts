@@ -53,8 +53,8 @@ class Product extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
-      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
@@ -83,7 +83,7 @@ class Product extends Entity {
   
   public static async update(request: Endpoint.Request<object, Product.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
       if (!entity) return new Response(Response.Code.NotFound, request.body).Complete(response);
       await Environmental.db_manager.save(Object.assign(entity, request.body));
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);

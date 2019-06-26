@@ -43,7 +43,17 @@ class FrontendApp extends App<Props> {
         User.logout();
       }
     }
-    localStorage.basket ? await Basket.findCurrent() || await Basket.findLast() : await Basket.findLast();
+    if (User.Instance.id) {
+      if (localStorage.basket) {
+        await Basket.findCurrent() || await Basket.findLast()
+      }
+      else {
+        await Basket.findLast()
+      }
+    }
+    else {
+      await Basket.findCurrent()
+    }
     this.setState(Object.assign(this.state, {ready: true}));
     
     console.log(this.state);

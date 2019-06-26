@@ -5,7 +5,6 @@ import "reflect-metadata";
 import * as TypeORM from "typeorm";
 import Directory from "../microservice-shared/typescript/services/Directory";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
-import Entity from "../microservice-shared/typescript/services/Entity";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 import IMSC from "../microservice-shared/typescript/typings/IMSC";
 
@@ -23,8 +22,8 @@ Promise.props({
 })
 .then(async dependencies => {
   
-  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response< {id: Buffer, uuid: string}>, next, id: string) => {
-    response.locals.params.uuid = id;
+  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
+    response.locals.params.id = id;
     next();
   });
   await new Directory(path.resolve(__dirname, "handlers/api.js")).require();

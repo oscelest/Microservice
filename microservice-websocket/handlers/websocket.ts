@@ -1,6 +1,5 @@
 import JWT from "jsonwebtoken";
 import User from "../../microservice-shared/typescript/entities/User";
-import Entity from "../../microservice-shared/typescript/services/Entity";
 import Environmental from "../../microservice-shared/typescript/services/Environmental";
 import Response from "../../microservice-shared/typescript/services/Response";
 import IMSC from "../../microservice-shared/typescript/typings/IMSC";
@@ -18,7 +17,7 @@ const WebsocketMethods: IMSC.WS.MessageMethods & WebsocketData = {
     async authorize(socket_id: string, jwt: string): Promise<any> {
       try {
         const decoded = JWT.verify(jwt, process.env.SECRET_JWT) as User.JWT;
-        const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(decoded.id)}});
+        const user = await Environmental.db_manager.findOne(User, {where: {id: decoded.id}});
         WebsocketMethods.sockets[socket_id] = {user: user};
       }
       catch (e) {

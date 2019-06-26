@@ -83,7 +83,7 @@ class User extends Entity {
       const user = await this.loginUser(request);
       _.set(user, "time_login", new Date());
       await Environmental.db_manager.save(user);
-      setTimeout(() => new Response(Response.Code.OK, {object: user.toJSON(), jwt: jwt.sign({id: Entity.uuidFromBuffer(user.id), type: "normal"}, Environmental.tokens.jwt, {expiresIn: "1w"})}).Complete(response), 3000);
+      new Response(Response.Code.OK, {object: user.toJSON(), jwt: jwt.sign({id: user.id, type: "normal"}, Environmental.tokens.jwt, {expiresIn: "1w"})}).Complete(response);
       
     }
     catch (e) {
@@ -108,7 +108,7 @@ class User extends Entity {
     if (!auth) throw new Exception.UnauthorizedRequestException("Could not authorize JWT.", {jwt: auth});
     const decoded = <User.JWT>jwt.decode(auth);
     if (!decoded) throw new Exception.MalformedRequestException("No user given by JWT.", {jwt: auth});
-    const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(decoded.id)}});
+    const user = await Environmental.db_manager.findOne(User, {where: {id: decoded.id}});
     if (!user) throw new Exception.MalformedRequestException("User given by JWT doesn't exist.", {jwt: auth});
     switch (decoded.type) {
       case "activation":

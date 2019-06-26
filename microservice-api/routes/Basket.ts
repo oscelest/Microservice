@@ -1,7 +1,6 @@
 import rp from "request-promise";
 import Basket from "../../microservice-shared/typescript/entities/Basket";
 import Endpoint from "../../microservice-shared/typescript/services/Endpoint";
-import Entity from "../../microservice-shared/typescript/services/Entity";
 import Response from "../../microservice-shared/typescript/services/Response";
 
 new Endpoint<Endpoint.FindQuery, object, object>("/basket", Endpoint.Method.GET, [
@@ -24,11 +23,11 @@ new Endpoint<Endpoint.FindQuery, object, object>("/basket", Endpoint.Method.GET,
 new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/:uuid", Endpoint.Method.GET, [
   (request, response) => rp({
     method: "GET",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
     json:   true,
   })
   .then(res => {
-    if (res.user && res.user.id !== Entity.uuidFromBuffer(response.locals.user.id)) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return new Response(Response.Code.OK, res.content).Complete(response);
   })
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
@@ -40,11 +39,11 @@ new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/last", Endpoint.Metho
     url:    `http://basket:${process.env.PORT}/last`,
     json:   true,
     body:   {
-      user: response.locals.user ? Entity.uuidFromBuffer(response.locals.user.id) : null,
+      user: response.locals.user ? response.locals.user.id : null,
     },
   })
   .then(res => {
-    if (res.user && res.user.id !== Entity.uuidFromBuffer(response.locals.user.id)) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return new Response(Response.Code.OK, res.content).Complete(response);
   })
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
@@ -56,7 +55,7 @@ new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Metho
     url:    `http://basket:${process.env.PORT}`,
     json:   true,
     body:   {
-      user: response.locals.user ? Entity.uuidFromBuffer(response.locals.user.id) : null,
+      user: response.locals.user ? response.locals.user.id : null,
     },
   })
   .then(res => new Response(Response.Code.OK, res.content).Complete(response))
@@ -65,20 +64,20 @@ new Endpoint<object, Basket.CreateRequestBody, object>("/basket", Endpoint.Metho
 
 new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:uuid", Endpoint.Method.PUT, [
   Endpoint.bodyFields({
-    user:           {type: "uuid", optional: true, convert: false},
+    user:           {type: "uuid", optional: true},
     flag_abandoned: {type: "boolean", optional: true},
     flag_completed: {type: "boolean", optional: true},
   }),
   (request, response) => rp({
     method: "GET",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
     json:   true,
   })
   .then(res => {
-    if (res.user && res.user.id !== Entity.uuidFromBuffer(response.locals.user.id)) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return rp({
       method: "PUT",
-      url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
+      url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
       json:   true,
       body:   request.body,
     })
@@ -89,12 +88,12 @@ new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:uu
 
 new Endpoint<object, Basket.SetProductRequestBody, Endpoint.UUIDLocals>("/basket/:uuid/product", Endpoint.Method.POST, [
   Endpoint.bodyFields({
-    quantity: {type: "number", min_value: 1, optional: true},
+    quantity: {type: "number", min_value: 0, optional: true},
     product:  {type: "uuid", convert: false},
   }),
   (request, response) => rp({
     method: "POST",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}/product`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}/product`,
     json:   true,
     body:   {
       product:  request.body.product,

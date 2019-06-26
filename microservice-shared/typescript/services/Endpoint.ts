@@ -64,7 +64,7 @@ class Endpoint<Q extends object, B extends object, P extends object> {
       if (request.get("Authorization")) {
         try {
           const decoded = jwt.verify(request.get("Authorization") || "", process.env.SECRET_JWT || "") as User.JWT;
-          response.locals.user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(decoded.id)}}) || null;
+          response.locals.user = await Environmental.db_manager.findOne(User, {where: {id: decoded.id}}) || null;
           return next();
         }
         catch (err) {
@@ -186,7 +186,7 @@ class Endpoint<Q extends object, B extends object, P extends object> {
         }
         if (parameters[key].type === "uuid") {
           const parameter = (parameters[key] || {}) as Endpoint.Parameter<"uuid">;
-          return _.set(result, key, Entity.isUUID(value) ? (parameter.convert === false ? value : Entity.bufferFromUUID(value)) : null);
+          return _.set(result, key, Entity.isUUID(value) ? value  : null);
         }
         if (parameters[key].type === "timestamp") {
           const parameter = (parameters[key] || {}) as Endpoint.Parameter<"timestamp">;
@@ -224,7 +224,7 @@ namespace Endpoint {
   export type Parameter<T extends ParameterType> =
     T extends "string" ? ParameterObject<"string"> & {min_length?: number, max_length?: number} :
     T extends "number" ? ParameterObject<"number"> & {min_value?: number, max_value?: number} :
-    T extends "uuid" | "timestamp" ? ParameterObject<"uuid" | "timestamp"> & {convert?: boolean} :
+    T extends "timestamp" ? ParameterObject<"timestamp"> & {convert?: boolean} :
     ParameterObject<T>;
   
   export interface ParameterObject<T extends ParameterType> {
@@ -246,7 +246,7 @@ namespace Endpoint {
   }
   
   export type UUIDLocals = {
-    uuid: string
+    id: string
   }
   
   export enum Method {

@@ -46,8 +46,8 @@ class Basket extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}, relations: ["user", "products"]});
-      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
+      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
@@ -88,7 +88,7 @@ class Basket extends Entity {
   
   public static async update(request: Endpoint.Request<object, Basket.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(Basket, {where: {id: response.locals.params.uuid}, relations: ["user", "products"]});
+      const basket = await Environmental.db_manager.findOne(Basket, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
       if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
       // await Environmental.db_connection.query(`UPDATE \`basket\` SET \`user\` = ${user_id}, \`time_updated\` = CURRENT_TIMESTAMP WHERE \`id\` = ${basket_id}`);
       if (request.body.user) basket.user = await Environmental.db_manager.findOne(User, {id: request.body.user}) || null;
@@ -105,18 +105,23 @@ class Basket extends Entity {
   
   public static async setProduct(request: Endpoint.Request<object, Basket.SetProductRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
-      if (!basket) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
-      const product = await Environmental.db_manager.findOne(Product, {where: {id: Entity.bufferFromUUID(request.body.product)}});
+      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      if (!basket) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
+      const product = await Environmental.db_manager.findOne(Product, {where: {id: request.body.product}});
       if (!product) return new Response(Response.Code.NotFound, {product: request.body.product}).Complete(response);
       if (product.stock < request.body.quantity) return new Response(Response.Code.BadRequest, {stock: product.stock, quantity: request.body.quantity}).Complete(response);
       const basket_product = await Environmental.db_manager.findOne(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}}) || new BasketProduct();
-      if (!basket_product.id) {
-        basket_product.basket = basket;
-        basket_product.product = product;
+      if (request.body.quantity < 1) {
+        await Environmental.db_manager.delete(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}})
       }
-      basket_product.quantity = request.body.quantity;
-      await Environmental.db_manager.save(basket_product);
+      else {
+        if (!basket_product.id) {
+          basket_product.basket = basket;
+          basket_product.product = product;
+        }
+        basket_product.quantity = request.body.quantity;
+        await Environmental.db_manager.save(basket_product);
+      }
       new Response(Response.Code.OK, basket_product.toJSON()).Complete(response);
     }
     catch (e) {
