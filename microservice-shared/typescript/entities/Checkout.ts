@@ -31,9 +31,10 @@ class Checkout extends Entity {
   @TypeORM.JoinColumn({name: "user"})
   public user: User | null;
   
-  public static async find(request: Endpoint.Request<Endpoint.FindQuery, object>, response: Endpoint.Response<object>): Promise<void> {
+  public static async find(request: Endpoint.Request<Endpoint.FindQuery, Checkout.FindRequestBody>, response: Endpoint.Response<object>): Promise<void> {
     try {
-      new Response(Response.Code.OK, (await Environmental.db_manager.find(this, Endpoint.parseFindQueryOptions(request.query))).map(v => v.toJSON())).Complete(response);
+      const checkouts = await Environmental.db_manager.find(this, Object.assign({user: request.body.user}, Endpoint.parseFindQueryOptions(request.query)));
+      new Response(Response.Code.OK, checkouts.map(v => v.toJSON())).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in find method on ${this.name} entity.`, e)).Complete(response);
@@ -59,6 +60,10 @@ class Checkout extends Entity {
 }
 
 namespace Checkout {
+  
+  export interface FindRequestBody {
+    user: string
+  }
   
   export interface CreateRequestBody {
     user: string
