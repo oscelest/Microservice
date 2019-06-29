@@ -26,11 +26,11 @@ class Frame extends React.Component<Props, State> {
       <header key="header">
         <nav>
           <div id="links">
-            <Link href='/'><a>Home</a></Link>
-            <Link href='/products'><a>Products</a></Link>
+            <Link href='/'><button>Home</button></Link>
+            <Link href='/products'><button>Products</button></Link>
           </div>
           <div id="user">
-            {this.props.globals.user.level > 0 ? <Link href='/admin'><a>Admin</a></Link> : ""}
+            {this.props.globals.user.level > 0 ? <Link href='/admin'><button>Admin</button></Link> : ""}
             {this.props.globals.user.id ? <button onClick={this.clickButtonLogout}>Logout</button> : <Link href='/'>
               <button>Login</button>
             </Link>}

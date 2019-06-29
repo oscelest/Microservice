@@ -185,7 +185,6 @@ class Endpoint<Q extends object, B extends object, P extends object> {
           return value.match(/^(?=.*[a-z])(?=.*[0-9])(?=.*[A-Z])[a-zA-Z0-9@%+\\\/'!#$^?:.(){}[\]~\-_,]{8,}$/) ? result : _.set(result, key, null);
         }
         if (parameters[key].type === "uuid") {
-          const parameter = (parameters[key] || {}) as Endpoint.Parameter<"uuid">;
           return _.set(result, key, Entity.isUUID(value) ? value  : null);
         }
         if (parameters[key].type === "timestamp") {

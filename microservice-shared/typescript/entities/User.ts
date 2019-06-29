@@ -8,6 +8,7 @@ import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
 import Basket from "./Basket";
+import Checkout from "./Checkout";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
@@ -47,6 +48,9 @@ class User extends Entity {
   
   @TypeORM.OneToMany(type => Basket, basket => basket.user)
   public baskets: Basket[];
+  
+  @TypeORM.OneToMany(type => Checkout, checkout => checkout.user)
+  public checkouts: Checkout[];
   
   /* Relations - Incoming */
   

@@ -181,3 +181,57 @@ services:
       - "traefik.enable=true"
     expose:
       - '${PORT}'
+
+  checkout:
+    container_name: microservice-checkout
+    image: microservice-checkout
+    build:
+      context: .
+      dockerfile: microservice-checkout/Dockerfile
+    command: "npm run start-checkout"
+    working_dir: /usr/src/microservice/microservice-checkout
+    volumes:
+      - ./microservice-checkout:/usr/src/microservice/microservice-checkout
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - PORT=${PORT}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.backend=checkout"
+      - "traefik.enable=true"
+    expose:
+      - '${PORT}'
+
+  mail:
+    container_name: microservice-mail
+    image: microservice-mail
+    build:
+      context: .
+      dockerfile: microservice-product/Dockerfile
+    command: "npm run start-mail"
+    working_dir: /usr/src/microservice/microservice-mail
+    volumes:
+      - ./microservice-mail:/usr/src/microservice/microservice-mail
+      - ./microservice-shared:/usr/src/microservice/microservice-shared
+      - ./node_modules:/usr/src/microservice/node_modules
+    environment:
+      - NODE_ENV=${ENVIRONMENT}
+      - PORT=${PORT}
+      - MQ_HOST=${RABBITMQ_HOST}
+      - DB_HOST=${MYSQL_HOST}
+      - DB_PORT=${MYSQL_PORT}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USERNAME=${MYSQL_ROOT_USERNAME}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    labels:
+      - "traefik.backend=mail"
+      - "traefik.enable=true"
+    expose:
+      - '${PORT}'

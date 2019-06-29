@@ -32,7 +32,6 @@ Promise.props({
     db_manager:    dependencies.db.manager,
   });
   
-  await Environmental.mq_channel.assertQueue("basket");
   await Environmental.mq_channel.assertQueue("websocket");
   
   await Environmental.mq_channel.consume("websocket", async message => {

@@ -8,7 +8,6 @@ import Endpoint from "../microservice-shared/typescript/services/Endpoint";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 
 Promise.props({
-  mq: Environmental.Connect(() => Promise.resolve(amqp.connect(process.env.MQ_HOST))),
   db: Environmental.Connect(() => Promise.resolve(TypeORM.createConnection({
       type:        "mysql",
       host:        process.env.DB_HOST,
@@ -31,14 +30,9 @@ Promise.props({
   Endpoint.publish();
   
   Object.assign(Environmental, {
-    mq_channel:    await dependencies.mq.createChannel(),
     db_connection: dependencies.db,
     db_manager:    dependencies.db.manager,
   });
-  
-  await Environmental.mq_channel.assertQueue("inventory");
-  await Environmental.mq_channel.assertQueue("basket");
-  await Environmental.mq_channel.assertQueue("mail");
   
   console.log("[API] Microservice online.");
 })

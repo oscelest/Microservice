@@ -6,8 +6,6 @@ import * as TypeORM from "typeorm";
 import Directory from "../microservice-shared/typescript/services/Directory";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
-import IMSC from "../microservice-shared/typescript/typings/IMSC";
-import AMQPMethods from "./handlers/amqp";
 
 Promise.props({
   mq: Environmental.Connect(() => Promise.resolve(AMQP.connect(process.env.MQ_HOST))),
@@ -23,34 +21,19 @@ Promise.props({
 })
 .then(async dependencies => {
   
+  await new Directory(path.resolve(__dirname, "handlers/api.js")).require();
   Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
     response.locals.params.id = id;
     next();
   });
-  await new Directory(path.resolve(__dirname, "handlers/api.js")).require();
   Endpoint.publish();
   
   Object.assign(Environmental, {
-    mq_channel:    await dependencies.mq.createChannel(),
     db_connection: dependencies.db,
     db_manager:    dependencies.db.manager,
   });
   
-  await Environmental.mq_channel.assertQueue("product");
   await Environmental.mq_channel.assertQueue("websocket");
-  await Environmental.mq_channel.consume("product", async message => {
-    try {
-      const request: IMSC.Message<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = JSON.parse(message.content.toString());
-      console.log("[Product] Message consumed", request);
-      
-      const response: IMSC.Message<any> = await AMQPMethods[request.target][request.method].apply(null, request.parameters);
-      Environmental.mq_channel.sendToQueue(response.target, Buffer.from(JSON.stringify(response)));
-    }
-    catch (e) {
-      console.log(e);
-    }
-    Environmental.mq_channel.ack(message);
-  });
   
   console.log("[Product] Microservice online.");
 })

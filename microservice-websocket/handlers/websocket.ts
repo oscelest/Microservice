@@ -11,7 +11,7 @@ const WebsocketMethods: IMSC.WS.MessageMethods & WebsocketData = {
   
   basket:    {},
   frontend:  {},
-  inventory: {},
+  product:   {},
   mail:      {},
   websocket: {
     async authorize(socket_id: string, jwt: string): Promise<any> {

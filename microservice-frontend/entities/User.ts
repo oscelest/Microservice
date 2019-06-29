@@ -55,6 +55,7 @@ class User extends Entity {
       body:    email && password && `email=${encodeURIComponent(email || "")}&password=${encodeURIComponent(password || "")}`,
     })
     .then(async res => await res.json() as JSONResponse<{jwt: string, object: EntityObject<User>}>)
+    .catch(() => ({code: 500, content: {}, time_complete: new Date().toISOString(), time_started: new Date().toISOString(), time_elapsed: "0ms"} as JSONResponse<any>))
     .then(async res => {
       if (res.code === 200) {
         localStorage.jwt = res.content.jwt;

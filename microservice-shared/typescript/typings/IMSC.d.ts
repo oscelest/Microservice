@@ -11,16 +11,17 @@ namespace IMSC {
     export interface BasketMessage {
     }
     
-    export interface InventoryMessage {
+    export interface ProductMessage {
     }
     
     export interface MailMessage {
+      send(type: string, recipient_user_id: string)
     }
     
     export interface MessageMethods {
       mail: MailMessage
       basket: BasketMessage
-      inventory: InventoryMessage
+      product: ProductMessage
       websocket: WebsocketMessage
       frontend: FrontendMessage
     }
@@ -38,18 +39,18 @@ namespace IMSC {
     export interface BasketMessage {
     }
     
-    export interface InventoryMessage {
-      // find(a: number): Promise<void>
+    export interface ProductMessage {
+    
     }
     
     export interface MailMessage {
-      // send(a: string): Promise<void>
+    
     }
     
     export interface MessageMethods {
       mail: MailMessage
       basket: BasketMessage
-      inventory: InventoryMessage
+      product: ProductMessage
       websocket: WebsocketMessage
       frontend: FrontendMessage
     }

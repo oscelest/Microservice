@@ -6,7 +6,9 @@
     "start-api": "nodemon -L -w './microservice-api' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-api/app.js\"",
     "start-websocket": "nodemon -L -w './microservice-websocket' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-websocket/app.js\"",
     "start-basket": "nodemon -L -w './microservice-basket' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-basket/app.js\"",
-    "start-product": "nodemon -L -w './microservice-product' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-product/app.js\""
+    "start-product": "nodemon -L -w './microservice-product' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-product/app.js\"",
+    "start-checkout": "nodemon -L -w './microservice-checkout' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-checkout/app.js\"",
+    "start-mail": "nodemon -L -w './microservice-mail' -w './microservice-shared/typescript' -e ts,json --exec \"tsc && node microservice-mail/app.js\""
   },
   "dependencies": {
     "@zeit/next-less": "^1.0.1",

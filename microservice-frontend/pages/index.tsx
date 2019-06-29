@@ -4,7 +4,7 @@ import LoginForm from "../components/Login";
 import SignupForm from "../components/Signup";
 import Basket from "../entities/Basket";
 import "../style.less";
-import Product from "../entities/Product";
+import BasketProduct from "../entities/BasketProduct";
 import {GlobalState} from "./_app";
 
 class IndexPage extends React.Component<Props, State> {
@@ -12,19 +12,31 @@ class IndexPage extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {};
-    this.clickAddProduct = this.clickAddProduct.bind(this);
+    this.clickSetProduct = this.clickSetProduct.bind(this);
   }
   
-  private async clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
+  private async clickSetProduct(e: React.MouseEvent<HTMLDivElement>, basket_product: BasketProduct, quantity: number) {
     e.preventDefault();
     try {
-      await Basket.setProduct(product, 0);
+      await Basket.setProduct(basket_product.product, basket_product.quantity + quantity);
     }
     catch (exception) {
       console.error("addProductError", exception);
     }
     this.props.globals.setState(this.props.globals);
   }
+
+  private async clickDeleteProduct(e: React.MouseEvent<HTMLButtonElement>, basket_product: BasketProduct) {
+    e.preventDefault();
+    try {
+      await Basket.setProduct(basket_product.product, 0);
+    }
+    catch (exception) {
+      console.error("addProductError", exception);
+    }
+    this.props.globals.setState(this.props.globals);
+  }
+  
   
   public render() {
     console.log(this.props.globals);
@@ -45,8 +57,13 @@ class IndexPage extends React.Component<Props, State> {
                      <div className="price">Per piece: {v.product.price / 100} DKK</div>
                      <div className="total-price">Total: {v.quantity * v.product.price / 100} DKK</div>
                    </div>
-                   <div className="quantity">{v.quantity}</div>
-                   <button onClick={e => this.clickAddProduct(e, v.product)}>Remove</button>
+                   
+                   <div className="quantity">
+                     <div className="plus"  onClick={e => this.clickSetProduct(e, v, 1)}>➕</div>
+                     <div className="count">{v.quantity}</div>
+                     <div className="minus" onClick={e => this.clickSetProduct(e, v, -1)}>➖</div>
+                   </div>
+                   <button onClick={e => this.clickDeleteProduct(e, v)}>Remove</button>
                  </div>
                ))
              }
