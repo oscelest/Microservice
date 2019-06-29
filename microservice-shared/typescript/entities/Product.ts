@@ -41,7 +41,7 @@ class Product extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product)
+  @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product, {eager: false, nullable: false})
   baskets: BasketProduct[];
   
   public static async find(request: Endpoint.Request<Endpoint.FindQuery, object>, response: Endpoint.Response<object>): Promise<void> {

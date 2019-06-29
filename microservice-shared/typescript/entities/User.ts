@@ -46,10 +46,10 @@ class User extends Entity {
   
   /* Relations - Outgoing */
   
-  @TypeORM.OneToMany(type => Basket, basket => basket.user)
+  @TypeORM.OneToMany(type => Basket, basket => basket.user, {nullable: false})
   public baskets: Basket[];
   
-  @TypeORM.OneToMany(type => Checkout, checkout => checkout.user)
+  @TypeORM.OneToMany(type => Checkout, checkout => checkout.user, {nullable: false})
   public checkouts: Checkout[];
   
   /* Relations - Incoming */

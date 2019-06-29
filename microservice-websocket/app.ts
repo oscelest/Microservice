@@ -5,9 +5,11 @@ import "reflect-metadata";
 import SocketIO from "socket.io";
 import * as TypeORM from "typeorm";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
+import Response from "../microservice-shared/typescript/services/Response";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 import IMSC from "../microservice-shared/typescript/typings/IMSC";
 import AMQPMethods from "./handlers/amqp";
+import WebsocketMethods from "./handlers/websocket";
 
 Promise.props({
   mq: Environmental.Connect(() => Promise.resolve(AMQP.connect(process.env.MQ_HOST))),
@@ -18,7 +20,7 @@ Promise.props({
     database: process.env.DB_NAME,
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
-    entities: [path.resolve(__dirname, "../microservice-shared/typescript/entities/**/*.Entity.js")],
+    entities: [path.resolve(__dirname, "../microservice-shared/typescript/entities/**.js")],
   }))),
 })
 .then(async dependencies => {
@@ -35,51 +37,29 @@ Promise.props({
   
   await Environmental.mq_channel.consume("websocket", async message => {
     try {
-      const request: IMSC.AMQPMessage<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = JSON.parse(message.content.toString());
+      const request: IMSC.AMQPMessage<IMSC.WS.WebsocketMessage> = JSON.parse(message.content.toString());
       console.log("[WS] Message consumed", request);
-      AMQPMethods[request.target][request.method].apply(null, request.parameters); // TODO: IMPLEMENT THIS
+      AMQPMethods[request.method].apply(null, request.parameters);
     }
     catch (e) {
       console.log(e);
     }
     Environmental.mq_channel.ack(message);
   });
-  // TODO: IMPLEMENT THIS
-  // Environmental.ws_server.on("connection", socket => {
-  //   socket.use((packet: [string, IMSC.WSMessage<IMSC.WS.MessageMethods[keyof IMSC.WS.MessageMethods]>, any], next) => {
-  //     try {
-  //       console.log("[WS] Packet received", packet[1]);
-  //
-  //       const request = packet[1];
-  //       const method = WebsocketMethods[request.target][request.method] as Function;
-  //       const response: IMSC.WSMessage<any> = method.apply(request, request.parameters);
-  //
-  //       if (response instanceof Response) {
-  //         socket.emit("exception", response);
-  //       }
-  //       else if (response.target === "frontend") {
-  //         socket.emit("message", response);
-  //       }
-  //       else {
-  //         WebsocketMethods.requests[request.id] = {
-  //           message: request,
-  //           socket:  socket.id,
-  //           timeout: setTimeout(() => {
-  //             socket.emit("exception", {code: 504, message: WebsocketMethods.requests[request.id].message});
-  //             delete WebsocketMethods.requests[request.id].message;
-  //           }, 5000),
-  //         };
-  //         Object.assign(response, {id: request.id});
-  //         Environmental.mq_channel.sendToQueue(response.target, Buffer.from(JSON.stringify(response)));
-  //       }
-  //       next();
-  //     }
-  //     catch (e) {
-  //       socket.emit("exception", new Response(200, e));
-  //       next();
-  //     }
-  //   });
-  // });
+  
+  Environmental.ws_server.on("connection", socket => {
+    socket.use((packet: [string, IMSC.WSMessage<IMSC.WS.MessageMethods[keyof IMSC.WS.MessageMethods]>, any], next) => {
+      try {
+        console.log("[WS] Packet received", packet[1]);
+        WebsocketMethods[packet[1].method].apply(packet[1], packet[1].parameters);
+        next();
+      }
+      catch (e) {
+        socket.emit("exception", new Response(Response.Code.BadRequest, e));
+        next();
+      }
+    });
+  });
   console.log("[WS] Microservice online.");
 })
 .catch(err => console.error(err));

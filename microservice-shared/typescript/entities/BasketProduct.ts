@@ -1,7 +1,7 @@
 import * as TypeORM from "typeorm";
 import Entity from "../services/Entity";
-import Product from "./Product";
 import Basket from "./Basket";
+import Product from "./Product";
 
 @TypeORM.Entity()
 @TypeORM.Unique("basket_product", ["basket", "product"])
@@ -21,11 +21,11 @@ class BasketProduct extends Entity {
   
   /* Relations */
   
-  @TypeORM.ManyToOne(type => Basket, basket => basket.products)
+  @TypeORM.ManyToOne(type => Basket, basket => basket.products, {eager: false, nullable: false})
   @TypeORM.JoinColumn({name: "basket"})
   public basket: Basket;
   
-  @TypeORM.ManyToOne(type => Product, product => product.baskets, {eager: true})
+  @TypeORM.ManyToOne(type => Product, product => product.baskets, {eager: true, nullable: false})
   @TypeORM.JoinColumn({name: "product"})
   public product: Product;
   

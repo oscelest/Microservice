@@ -29,18 +29,12 @@ Promise.props({
     db_manager:    dependencies.db.manager,
   });
   
-  await Environmental.mq_channel.assertQueue("email");
-  await Environmental.mq_channel.consume("email", async message => {
+  await Environmental.mq_channel.assertQueue("mail");
+  await Environmental.mq_channel.consume("mail", async message => {
     try {
-      // TODO: UPDATE THIS CODE TO LOOK LIKE THE CODE IN WEBSOCKET.
-      const request: IMSC.AMQPMessage<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = JSON.parse(message.content.toString());
-      console.log("[Email] Message consumed", request);
-
-      const response: IMSC.AMQPMessage<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = await AMQPMethods[request.target][request.method].apply(null, request.parameters);
-      
-      if (response) {
-        Environmental.mq_channel.sendToQueue(response.target, Buffer.from(JSON.stringify(response)));
-      }
+      const request: IMSC.AMQPMessage<IMSC.AMQP.MailMessage> = JSON.parse(message.content.toString());
+      console.log("[WS] Message consumed", request);
+      AMQPMethods[request.method].apply(request, request.parameters);
     }
     catch (e) {
       console.log(e);

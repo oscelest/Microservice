@@ -29,7 +29,7 @@ namespace IMSC {
     }
     
     export interface FrontendMessage {
-      update_product(product: Product): void
+      product_update(product: Product): void
     }
     
     export interface MessageMethods {

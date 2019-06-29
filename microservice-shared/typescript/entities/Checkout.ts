@@ -1,4 +1,5 @@
 import * as TypeORM from "typeorm";
+import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
 import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
@@ -7,7 +8,6 @@ import Response from "../services/Response";
 import IMSC from "../typings/IMSC";
 import Basket from "./Basket";
 import User from "./User";
-import uuid from "uuid";
 
 @TypeORM.Entity()
 class Checkout extends Entity {
@@ -26,11 +26,11 @@ class Checkout extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToOne(type => Basket)
+  @TypeORM.OneToOne(type => Basket, {eager: true, nullable: false})
   @TypeORM.JoinColumn({name: "basket"})
   public basket: Basket;
   
-  @TypeORM.ManyToOne(type => User, user => user.checkouts, {cascade: true, eager: true, nullable: true})
+  @TypeORM.ManyToOne(type => User, user => user.checkouts, {eager: true, nullable: true})
   @TypeORM.JoinColumn({name: "user"})
   public user: User | null;
   
@@ -55,20 +55,21 @@ class Checkout extends Entity {
       checkout.basket = basket;
       checkout.user = user;
       checkout.price = basket.products.reduce((r, v) => r + v.quantity * v.product.price, 0);
-      await Environmental.db_manager.save(checkout);
-      
-      basket.flag_completed = true;
+      const entity = await Environmental.db_manager.save(checkout);
+  
+      const message: IMSC.AMQPMessage<IMSC.AMQP.MailMessage> = {id: uuid.v4(), target: "mail", source: "checkout", method: "send", parameters: ["checkout", entity.id]};
+      Environmental.mq_channel.sendToQueue("mail", Buffer.from(JSON.stringify(message)));
       
       await Promise.all(basket.products.map(async v => {
         v.product.stock -= v.quantity;
+        await Environmental.db_manager.save(v.product);
         const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), target: "websocket", source: "checkout", method: "product_update", parameters: [v.product.id]};
-        Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)))
-        return await Environmental.db_manager.save(v.product);
+        Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
       }));
       
+      basket.flag_completed = true;
       await Environmental.db_manager.save(basket);
-      
-      new Response(Response.Code.OK, checkout.toJSON()).Complete(response);
+      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in find method on ${this.name} entity.`, e)).Complete(response);

@@ -10,6 +10,14 @@ import User from "../entities/User";
 class FrontendApp extends App<Props> {
   
   public state: GlobalState;
+  private static Instance: FrontendApp;
+  
+  private WebsocketMethods: IMSC.WS.FrontendMessage = {
+    product_update(product: any) {
+      Product.products[product.id] = new Product(product);
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+    },
+  };
   
   constructor(props: Props) {
     super(props);
@@ -20,22 +28,22 @@ class FrontendApp extends App<Props> {
       socket:   io("ws.localhost"),
       setState: (state, callback) => this.setState(state, callback),
     };
+    FrontendApp.Instance = this;
   }
   
   public async componentDidMount() {
     if (localStorage.jwt) {
       try {
         Object.assign(this.state.user, await User.login());
+        
         this.state.socket.emit("message", {
-          source:     "frontend",
-          method:     "authorize",
-          target:     "websocket",
-          parameters: [this.state.socket.id, localStorage.jwt],
           id:         uuid.v4(),
+          method:     "authorize",
+          parameters: [this.state.socket.id, localStorage.jwt],
         } as IMSC.WSMessage<IMSC.WS.WebsocketMessage>);
-        this.state.socket.on("update_product", (message: IMSC.WSMessage<IMSC.WS.FrontendMessage>) => {
-          Product.products[message.parameters[0].id] = new Product(message.parameters[0]);
-          this.setState(this.state);
+        
+        this.state.socket.on("message", (message: IMSC.WSMessage<IMSC.WS.FrontendMessage>) => {
+          this.WebsocketMethods[message.method].apply(message, message.parameters);
           console.log(message);
         })
       }

@@ -31,7 +31,7 @@ class Basket extends Entity {
   @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {eager: true, nullable: false})
   public products: BasketProduct[];
   
-  @TypeORM.ManyToOne(type => User, user => user.baskets, {cascade: true, eager: true, nullable: true})
+  @TypeORM.ManyToOne(type => User, user => user.baskets, {eager: true, nullable: true})
   @TypeORM.JoinColumn({name: "user"})
   public user: User | null;
   
@@ -90,11 +90,9 @@ class Basket extends Entity {
     try {
       const basket = await Environmental.db_manager.findOne(Basket, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
       if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
-      // await Environmental.db_connection.query(`UPDATE \`basket\` SET \`user\` = ${user_id}, \`time_updated\` = CURRENT_TIMESTAMP WHERE \`id\` = ${basket_id}`);
       if (request.body.user) basket.user = await Environmental.db_manager.findOne(User, {id: request.body.user}) || null;
       if (request.body.flag_abandoned) basket.flag_abandoned = request.body.flag_abandoned;
       if (request.body.flag_completed) basket.flag_completed = request.body.flag_completed;
-      console.log(basket);
       
       new Response(Response.Code.OK, (await Environmental.db_manager.save(basket)).toJSON()).Complete(response);
     }
