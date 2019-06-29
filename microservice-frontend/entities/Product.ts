@@ -12,6 +12,8 @@ class Product extends Entity {
   public time_created: Date;
   public time_updated: Date;
   
+  public static products: {[key: string]: Product} = {};
+  
   constructor(object: EntityObject<Product>) {
     super();
     this.id = object.id;
@@ -39,7 +41,7 @@ class Product extends Entity {
     })
     .then(async res => await res.json() as JSONResponse<EntityObject<Product>[]>)
     .then(async res => {
-      if (res.code === 200) return res.content.map(object => new Product(object));
+      if (res.code === 200) return res.content.map(object => Product.products[object.id] = new Product(object));
       throw res;
     });
   }

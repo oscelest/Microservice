@@ -38,11 +38,11 @@ class ProductsPage extends React.Component<Props, State> {
   }
   
   public render() {
+    // TODO: CREATE UPDATE AND REMOVE PRODUCT UI AND CALLS
     return (
       <Frame title="Products | Webshop" globals={this.props.globals}>
         <div id="products">
-          {this.state.products.map((v, k) => {
-            // console.log(k, v);
+          {this.state.products.map(v => Product.products[v.id]).map((v, k) => {
             return (
               <Link href="/" key={k}>
                 <div className="product">

@@ -21,19 +21,21 @@ Promise.props({
 })
 .then(async dependencies => {
   
-  await new Directory(path.resolve(__dirname, "handlers/api.js")).require();
   Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
     response.locals.params.id = id;
     next();
   });
+  await new Directory(path.resolve(__dirname, "handlers/api.js")).require();
   Endpoint.publish();
   
   Object.assign(Environmental, {
+    mq_channel:    await dependencies.mq.createChannel(),
     db_connection: dependencies.db,
     db_manager:    dependencies.db.manager,
   });
   
   await Environmental.mq_channel.assertQueue("websocket");
+
   
   console.log("[Product] Microservice online.");
 })

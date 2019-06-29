@@ -32,11 +32,15 @@ Promise.props({
   await Environmental.mq_channel.assertQueue("email");
   await Environmental.mq_channel.consume("email", async message => {
     try {
-      const request: IMSC.Message<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = JSON.parse(message.content.toString());
+      // TODO: UPDATE THIS CODE TO LOOK LIKE THE CODE IN WEBSOCKET.
+      const request: IMSC.AMQPMessage<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = JSON.parse(message.content.toString());
       console.log("[Email] Message consumed", request);
 
-      const response: IMSC.Message<any> = await AMQPMethods[request.target][request.method].apply(null, request.parameters);
-      Environmental.mq_channel.sendToQueue(response.target, Buffer.from(JSON.stringify(response)));
+      const response: IMSC.AMQPMessage<IMSC.AMQP.MessageMethods[keyof IMSC.AMQP.MessageMethods]> = await AMQPMethods[request.target][request.method].apply(null, request.parameters);
+      
+      if (response) {
+        Environmental.mq_channel.sendToQueue(response.target, Buffer.from(JSON.stringify(response)));
+      }
     }
     catch (e) {
       console.log(e);

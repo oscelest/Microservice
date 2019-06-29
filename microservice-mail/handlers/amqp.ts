@@ -4,8 +4,8 @@ const AMQPMethods: Pick<IMSC.AMQP.MessageMethods, "mail"> = {
   
   mail: {
     send(type: string, recipient: string) {
-      console.log(type, recipient)
-    }
+      console.log(type, recipient);
+    },
   },
   
 };

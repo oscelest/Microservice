@@ -4,7 +4,9 @@ import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
+import IMSC from "../typings/IMSC";
 import BasketProduct from "./BasketProduct";
+import uuid from "uuid";
 
 @TypeORM.Entity()
 @TypeORM.Unique("key", ["key"])
@@ -83,10 +85,20 @@ class Product extends Entity {
   
   public static async update(request: Endpoint.Request<object, Product.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
-      if (!entity) return new Response(Response.Code.NotFound, request.body).Complete(response);
-      await Environmental.db_manager.save(Object.assign(entity, request.body));
-      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
+      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      if (!product) return new Response(Response.Code.NotFound, request.body).Complete(response);
+
+      if (product.key) product.key = request.body.key;
+      if (product.title) product.title = request.body.title;
+      if (product.description) product.description = request.body.description;
+      if (product.image) product.image = request.body.image;
+      if (product.stock) product.stock = request.body.stock;
+      if (product.price) product.price = request.body.price;
+      
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {method: "product_update", parameters: [product.id], source: "product", target: "websocket", id: uuid.v4()};
+      Environmental.mq_channel.sendToQueue("mail", Buffer.from(JSON.stringify(message)));
+      
+      new Response(Response.Code.OK, (await Environmental.db_manager.save(product)).toJSON()).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
@@ -108,7 +120,6 @@ namespace Product {
   }
   
   export type UpdateRequestBody = {
-    id: Buffer
     key: string
     title: string
     image: string

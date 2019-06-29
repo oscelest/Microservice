@@ -4,6 +4,7 @@ import io from "socket.io-client";
 import uuid from "uuid";
 import IMSC from "../../microservice-shared/typescript/typings/IMSC";
 import Basket from "../entities/Basket";
+import Product from "../entities/Product";
 import User from "../entities/User";
 
 class FrontendApp extends App<Props> {
@@ -31,7 +32,12 @@ class FrontendApp extends App<Props> {
           target:     "websocket",
           parameters: [this.state.socket.id, localStorage.jwt],
           id:         uuid.v4(),
-        } as IMSC.Message<IMSC.WS.WebsocketMessage>);
+        } as IMSC.WSMessage<IMSC.WS.WebsocketMessage>);
+        this.state.socket.on("update_product", (message: IMSC.WSMessage<IMSC.WS.FrontendMessage>) => {
+          Product.products[message.parameters[0].id] = new Product(message.parameters[0]);
+          this.setState(this.state);
+          console.log(message);
+        })
       }
       catch (e) {
         User.Instance.id = "";
@@ -55,9 +61,6 @@ class FrontendApp extends App<Props> {
       await Basket.findCurrent()
     }
     this.setState(Object.assign(this.state, {ready: true}));
-    
-    console.log(this.state);
-    console.log(User.Loading);
   }
   
   public componentWillUnmount() {

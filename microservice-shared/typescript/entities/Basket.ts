@@ -46,7 +46,7 @@ class Basket extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id, flag_abandoned: false, flag_completed: false}, relations: ["user", "products"]});
       if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
@@ -112,7 +112,7 @@ class Basket extends Entity {
       if (product.stock < request.body.quantity) return new Response(Response.Code.BadRequest, {stock: product.stock, quantity: request.body.quantity}).Complete(response);
       const basket_product = await Environmental.db_manager.findOne(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}}) || new BasketProduct();
       if (request.body.quantity < 1) {
-        await Environmental.db_manager.delete(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}})
+        await Environmental.db_manager.delete(BasketProduct, {where: {product: {id: product.id}, basket: {id: basket.id}}});
       }
       else {
         if (!basket_product.id) {

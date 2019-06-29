@@ -4,15 +4,11 @@ import Environmental from "../../microservice-shared/typescript/services/Environ
 import Response from "../../microservice-shared/typescript/services/Response";
 import IMSC from "../../microservice-shared/typescript/typings/IMSC";
 
-const WebsocketMethods: IMSC.WS.MessageMethods & WebsocketData = {
+const WebsocketMethods: Pick<IMSC.WS.MessageMethods, "websocket"> & WebsocketData = {
   
   requests: {},
   sockets:  {},
   
-  basket:    {},
-  frontend:  {},
-  product:   {},
-  mail:      {},
   websocket: {
     async authorize(socket_id: string, jwt: string): Promise<any> {
       try {
@@ -38,7 +34,7 @@ interface WebsocketData {
   requests: {
     [key: string]: {
       socket: string,
-      message: IMSC.Message<any>,
+      message: IMSC.WSMessage<any>,
       timeout: NodeJS.Timeout
     }
   }
