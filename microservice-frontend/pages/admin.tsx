@@ -15,7 +15,12 @@ class ProductsPage extends React.Component<Props, State> {
       product: {key: "", title: "", description: "", image: "", price: 0, stock: 0},
     };
     this.changeInput = this.changeInput.bind(this);
+    this.changeUpdateProductKey = this.changeUpdateProductKey.bind(this);
     this.changeUpdateProductTitle = this.changeUpdateProductTitle.bind(this);
+    this.changeUpdateProductDescription = this.changeUpdateProductDescription.bind(this);
+    this.changeUpdateProductImage = this.changeUpdateProductImage.bind(this);
+    this.changeUpdateProductStock = this.changeUpdateProductStock.bind(this);
+    this.changeUpdateProductPrice = this.changeUpdateProductPrice.bind(this);
     
     this.clickCreateProduct = this.clickCreateProduct.bind(this);
     this.clickUpdateProduct = this.clickUpdateProduct.bind(this);
@@ -91,8 +96,6 @@ class ProductsPage extends React.Component<Props, State> {
   
   public render() {
     return (
-      // TODO: CREATE UPDATE AND REMOVE PRODUCT UI AND CALLS
-      
       <Frame title="Admin | Webshop" globals={this.props.globals}>
         <div id="admin">
           <div id="admin-products">
@@ -138,6 +141,7 @@ class ProductsPage extends React.Component<Props, State> {
           </div>
           
           <div id="admin-create-product">
+            <img src={this.state.product.image} alt="missing"/>
             <div>
               <label htmlFor="key">Key</label>
               <input id="key" type="text" value={this.state.product.key} onChange={this.changeInput}/>

@@ -28,7 +28,7 @@ class Basket extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {eager: true, nullable: false})
+  @TypeORM.OneToMany(type => BasketProduct, product => product.basket, {cascade: true, eager: true, nullable: false})
   public products: BasketProduct[];
   
   @TypeORM.ManyToOne(type => User, user => user.baskets, {eager: true, nullable: true})

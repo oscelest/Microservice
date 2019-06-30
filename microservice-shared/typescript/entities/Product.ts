@@ -112,9 +112,11 @@ class Product extends Entity {
   
   public static async remove(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      await Environmental.db_manager.delete(this, {where: {id: response.locals.params.uuid}});
-      
-      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_delete", parameters: [response.locals.params.uuid]};
+      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      if (!product) return new Response(Response.Code.NotFound, request.body).Complete(response);
+  
+      await Environmental.db_manager.remove(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_remove", parameters: [response.locals.params.uuid]};
       Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
       
       new Response(Response.Code.OK, {}).Complete(response);

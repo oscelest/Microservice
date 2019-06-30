@@ -294,6 +294,7 @@ html, body, #__next {
 
   #admin {
     flex-flow: row;
+    margin-top: 20px;
 
     #admin-products {
       flex: 1 0 auto;
@@ -303,6 +304,7 @@ html, body, #__next {
 
       .product {
         height: 160px;
+        max-height: 160px;
         flex: 1 0 auto;
         flex-flow: row;
         padding: 10px;
@@ -387,7 +389,6 @@ html, body, #__next {
           justify-content: space-around;
           align-items: center;
         }
-
       }
     }
 
@@ -395,7 +396,59 @@ html, body, #__next {
       width: 20%;
       min-width: 200px;
       max-width: 400px;
+      height: 100%;
       flex: 0 0 auto;
+      padding-right: 20px;
+      align-items: center;
+
+      img {
+        flex: 1 1 auto;
+        width: 100px;
+        height: 100px;
+        margin-bottom: 10px;
+      }
+
+      div {
+        width: 100%;
+        flex: 1 1 auto;
+        margin-bottom: 10px;
+
+        label {
+          margin-bottom: 5px;
+        }
+
+        input {
+          height: 20px;
+          border: none;
+          border-bottom: 1px solid rgba(200, 200, 200, 0.6);
+          outline: none;
+        }
+      }
+    }
+  }
+
+  #purchases {
+    align-self: center;
+    min-width: 400px;
+    width: 80%;
+    max-width: 800px;
+
+    .purchase {
+      margin-top: 20px;
+
+      .header {
+        flex: 1 0 auto;
+        flex-flow: row;
+        justify-content: space-between;
+        font-size: 24px;
+        font-weight: bold;
+        border-bottom: 1px solid rgba(200, 200, 200, 0.6);
+        margin-bottom: 10px;
+      }
+
+      .product {
+        margin-bottom: 5px;
+      }
     }
   }
 

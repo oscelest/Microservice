@@ -8,7 +8,7 @@ new Endpoint<Endpoint.FindQuery, object, object>("/checkout", Endpoint.Method.GE
   Endpoint.setPermissionLevel(0),
   Endpoint.queryFields({
     start: {type: "number", min_value: 0, optional: true},
-    limit: {type: "number", min_value: 1, max_value: 100, optional: true},
+    limit: {type: "number", min_value: 1, max_value: 1000, optional: true},
     sort:  {type: "string", optional: true},
     order: {type: "string", optional: true},
   }),

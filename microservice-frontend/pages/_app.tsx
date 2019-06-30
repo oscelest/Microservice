@@ -22,7 +22,7 @@ class FrontendApp extends App<Props> {
       FrontendApp.Instance.setState(FrontendApp.Instance.state);
       await Basket.update();
     },
-    async product_delete(product_id: string) {
+    async product_remove(product_id: string) {
       delete Product.products[product_id];
       FrontendApp.Instance.setState(FrontendApp.Instance.state);
       await Basket.update();

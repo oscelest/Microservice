@@ -6,7 +6,7 @@ namespace IMSC {
     export interface WebsocketMessage {
       product_create(product_id: string)
       product_update(product_id: string)
-      product_delete(product_id: string)
+      product_remove(product_id: string)
     }
     
     export interface MailMessage {
@@ -33,7 +33,7 @@ namespace IMSC {
     export interface FrontendMessage {
       product_create(product: Product): void
       product_update(product: Product): void
-      product_delete(product_id: string): void
+      product_remove(product_id: string): void
     }
     
     export interface MessageMethods {

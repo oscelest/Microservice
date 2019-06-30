@@ -12,8 +12,8 @@ const AMQPMethods: IMSC.AMQP.WebsocketMessage = {
     const product = await Environmental.db_manager.findOne(Product, {where: {id: product_id}});
     Environmental.ws_server.emit("message", {id: uuid.v4(), method: "product_update", parameters: [product.toJSON()]} as IMSC.WSMessage<IMSC.WS.FrontendMessage>);
   },
-  async product_delete(product_id: string) {
-    Environmental.ws_server.emit("message", {id: uuid.v4(), method: "product_delete", parameters: [product_id]} as IMSC.WSMessage<IMSC.WS.FrontendMessage>);
+  async product_remove(product_id: string) {
+    Environmental.ws_server.emit("message", {id: uuid.v4(), method: "product_remove", parameters: [product_id]} as IMSC.WSMessage<IMSC.WS.FrontendMessage>);
   },
 };
 

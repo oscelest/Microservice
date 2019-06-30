@@ -25,7 +25,7 @@ class BasketProduct extends Entity {
   @TypeORM.JoinColumn({name: "basket"})
   public basket: Basket;
   
-  @TypeORM.ManyToOne(type => Product, product => product.baskets, {eager: true, nullable: false})
+  @TypeORM.ManyToOne(type => Product, product => product.baskets, {onDelete: "CASCADE", eager: true, nullable: false})
   @TypeORM.JoinColumn({name: "product"})
   public product: Product;
   

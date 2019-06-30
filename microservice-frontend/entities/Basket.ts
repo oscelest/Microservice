@@ -124,7 +124,7 @@ class Basket extends Entity {
           catch (exception) {
             if (exception.code === 400 && exception.content.quantity > exception.content.stock) {
               v.quantity = exception.content.stock;
-              alert("Could not add product to basket. Quantity exceeds stock."); // Todo: Add dialog that doesn't halt process like Alert does.
+              alert("Could not add product to basket. Quantity exceeds stock.");
             }
             return v;
           }

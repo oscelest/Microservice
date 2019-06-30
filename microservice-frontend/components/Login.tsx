@@ -6,6 +6,14 @@ import {GlobalState} from "../pages/_app";
 
 class LoginForm extends React.Component<Props, State> {
   
+  private error_messages: {[key: string]: string} = {
+    400: "Form not filled properly.",
+    401: "Could not authorize user.",
+    403: "Forbidden.",
+    404: "Not found or server error.",
+    500: "Internal server error.",
+  };
+  
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -43,7 +51,7 @@ class LoginForm extends React.Component<Props, State> {
       <div id="login">
         {this.props.header ? <h2>{this.props.header}</h2> : ""}
         
-        {this.state.error ? <span>{this.state.error}</span> : ""}
+        {this.state.error ? <h3>{this.error_messages[this.state.error]}</h3> : ""}
         
         <label htmlFor="login_email">Email</label>
         <input type="email" id="login_email" formTarget="email" value={this.state.input.email || ""} autoComplete="username"

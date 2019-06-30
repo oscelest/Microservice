@@ -1,4 +1,3 @@
-import Link from "next/link";
 import * as React from "react";
 import Frame from "../components/Frame";
 import Basket from "../entities/Basket";
@@ -11,7 +10,7 @@ class ProductsPage extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loading: false
+      loading: false,
     };
     this.changeInput = this.changeInput.bind(this);
     this.clickAddProduct = this.clickAddProduct.bind(this);
@@ -44,15 +43,13 @@ class ProductsPage extends React.Component<Props, State> {
         <div id="products">
           {Object.values(Product.products).map((v, k) => {
             return (
-              <Link href="/" key={k}>
-                <div className="product">
-                  <span className="title">{v.title}</span>
-                  <span className="stock">{v.stock} left in stock</span>
-                  <img src={v.image} alt={v.description}/>
-                  <span className="price">{v.price / 100} DKK</span>
-                  <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
-                </div>
-              </Link>
+              <div className="product" key={k}>
+                <span className="title">{v.title}</span>
+                <span className="stock">{v.stock} left in stock</span>
+                <img src={v.image} alt={v.description}/>
+                <span className="price">{v.price / 100} DKK</span>
+                <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
+              </div>
             );
           })}
         </div>

@@ -20,20 +20,46 @@ class Frame extends React.Component<Props, State> {
     return [
       <Head key="Head">
         <title>{this.props.title}</title>
-        <meta charSet='utf-8'/>
-        <meta name='viewport' content='initial-scale=1.0, width=device-width'/>
+        <meta charSet="utf-8"/>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width"/>
       </Head>,
       <header key="header">
         <nav>
           <div id="links">
-            <Link href='/'><button>Home</button></Link>
-            <Link href='/products'><button>Products</button></Link>
+            <Link href="/">
+              <button>Home</button>
+            </Link>
+            <Link href="/products">
+              <button>Products</button>
+            </Link>
+            <Link href="/basket">
+              <button>Basket</button>
+            </Link>
           </div>
           <div id="user">
-            {this.props.globals.user.level > 0 ? <Link href='/admin'><button>Admin</button></Link> : ""}
-            {this.props.globals.user.id ? <button onClick={this.clickButtonLogout}>Logout</button> : <Link href='/'>
-              <button>Login</button>
-            </Link>}
+            {
+              this.props.globals.user.level > 0
+              ?
+              <Link href="/admin">
+                <button>Admin</button>
+              </Link>
+              :
+              null
+            }
+            {
+              this.props.globals.user.id
+              ?
+              [
+                <Link href="/purchases" key="1">
+                  <button>Purchases</button>
+                </Link>,
+                <button key="0" onClick={this.clickButtonLogout}>Logout</button>,
+              ]
+              :
+              <Link href="/">
+                <button>Login</button>
+              </Link>
+            }
           </div>
         </nav>
       </header>,
@@ -44,7 +70,7 @@ class Frame extends React.Component<Props, State> {
 }
 
 interface State {
-
+  
 }
 
 interface Props {
