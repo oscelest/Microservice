@@ -27,68 +27,84 @@ class Product extends Entity {
     this.time_updated = new Date(object.time_updated || 0);
   }
   
-  public create() {
-    return Product.create(this);
+  public static async find(start = 0, limit = 1000): Promise<Product[] | JSONResponse<any>> {
+    try {
+      const response = await fetch(`${location.protocol}//api.${location.host}/product?start=${start}&limit=${limit}`, {
+        method:  "GET",
+        headers: {
+          "Authorization": localStorage.getItem("jwt") || "",
+          "Content-Type":  "application/x-www-form-urlencoded",
+        },
+      });
+      const object: JSONResponse<EntityObject<Product>[]> = await response.json();
+      if (object.code === 200) return object.content.map(object => Product.products[object.id] = new Product(object));
+      return object;
+    }
+    catch (exception) {
+      return {code: 500, content: {}, time_started: new Date().toISOString(), time_complete: new Date().toISOString(), time_elapsed: "0ms"} as JSONResponse<any>;
+    }
   }
   
-  public static async find(start = 0, limit = 10): Promise<Product[]> {
-    return await fetch(`${location.protocol}//api.${location.host}/product?start=${start}&limit=${limit}`, {
-      method:  "GET",
-      headers: {
-        "Authorization": localStorage.getItem("jwt") || "",
-        "Content-Type":  "application/x-www-form-urlencoded",
-      },
-    })
-    .then(async res => await res.json() as JSONResponse<EntityObject<Product>[]>)
-    .then(async res => {
-      if (res.code === 200) return res.content.map(object => Product.products[object.id] = new Product(object));
-      throw res;
-    });
+  public static async create(key: string, title: string, description: string, image: string, price: number, stock: number): Promise<Product | JSONResponse<any>> {
+    try {
+      key = encodeURIComponent(key);
+      title = encodeURIComponent(title);
+      description = encodeURIComponent(description);
+      image = encodeURIComponent(image);
+      const response = await fetch(`${location.protocol}//api.${location.host}/product`, {
+        method:  "POST",
+        headers: {
+          "Authorization": localStorage.getItem("jwt") || "",
+          "Content-Type":  "application/x-www-form-urlencoded",
+        },
+        body:    `key=${key}&title=${title}&description=${description}&image=${image}&price=${price}&stock=${stock}`,
+      });
+      const object: JSONResponse<EntityObject<Product>> = await response.json();
+      if (object.code === 200) return new Product(object.content);
+      return object;
+    }
+    catch (exception) {
+      return {code: 500, content: {}, time_started: new Date().toISOString(), time_complete: new Date().toISOString(), time_elapsed: "0ms"} as JSONResponse<any>;
+    }
   }
   
-  public static async findById(id: string): Promise<Product> {
-    return await fetch(`${location.protocol}//api.${location.host}/product/${id}`, {
-      method:  "GET",
-      headers: {
-        "Authorization": localStorage.getItem("jwt") || "",
-        "Content-Type":  "application/x-www-form-urlencoded",
-      },
-    })
-    .then(async res => await res.json() as JSONResponse<EntityObject<Product>>)
-    .then(async res => {
-      if (res.code === 200) return new Product(res.content);
-      throw res;
-    });
+  public static async update(product: Product): Promise<Product | JSONResponse<any>> {
+    try {
+      const response = await fetch(`${location.protocol}//api.${location.host}/product/${product.id}`, {
+        method:  "PUT",
+        headers: {
+          "Authorization": localStorage.getItem("jwt") || "",
+          "Content-Type":  "application/x-www-form-urlencoded",
+        },
+        body:    Entity.toBody(product),
+      });
+      const object: JSONResponse<EntityObject<Product>> = await response.json();
+      if (object.code === 200) return new Product(object.content);
+      return object;
+    }
+    catch (exception) {
+      return {code: 500, content: {}, time_started: new Date().toISOString(), time_complete: new Date().toISOString(), time_elapsed: "0ms"} as JSONResponse<any>;
+    }
   }
   
-  public static create(product: Product): Promise<Product> {
-    return fetch(`${location.protocol}//api.${location.host}/product`, {
-      method:  "POST",
-      headers: {
-        "Authorization": localStorage.getItem("jwt") || "",
-        "Content-Type":  "application/x-www-form-urlencoded",
-      },
-      body:    Entity.toBody(product),
-    })
-    .then(async res => await res.json() as JSONResponse<EntityObject<Product>>)
-    .then(async res => {
-      if (res.code === 200) return new Product(res.content);
-      throw res;
-    });
+  public static async remove(product_id: string): Promise<any | JSONResponse<any>> {
+    try {
+      const response = await fetch(`${location.protocol}//api.${location.host}/product/${product_id}`, {
+        method:  "DELETE",
+        headers: {
+          "Authorization": localStorage.getItem("jwt") || "",
+          "Content-Type":  "application/x-www-form-urlencoded",
+        },
+      });
+      const object: JSONResponse<any> = await response.json();
+      if (object.code === 200) return object.content;
+      return object;
+    }
+    catch (exception) {
+      return {code: 500, content: {}, time_started: new Date().toISOString(), time_complete: new Date().toISOString(), time_elapsed: "0ms"} as JSONResponse<any>;
+    }
   }
   
-}
-
-export interface ProductContent {
-  id: string;
-  key: string
-  title: string
-  description: string
-  image: string
-  price: number
-  stock: number
-  time_created: Date;
-  time_updated: Date;
 }
 
 export default Product;

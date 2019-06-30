@@ -46,8 +46,8 @@ class Basket extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id, flag_abandoned: false, flag_completed: false}, relations: ["user", "products"]});
-      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid, flag_abandoned: false, flag_completed: false}, relations: ["user", "products"]});
+      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
@@ -88,7 +88,7 @@ class Basket extends Entity {
   
   public static async update(request: Endpoint.Request<object, Basket.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(Basket, {where: {id: response.locals.params.id}, relations: ["user", "products"]});
+      const basket = await Environmental.db_manager.findOne(Basket, {where: {id: response.locals.params.uuid}, relations: ["user", "products"]});
       if (!basket) return new Response(Response.Code.NotFound, request.body).Complete(response);
       if (request.body.user) basket.user = await Environmental.db_manager.findOne(User, {id: request.body.user}) || null;
       if (request.body.flag_abandoned) basket.flag_abandoned = request.body.flag_abandoned;
@@ -103,8 +103,8 @@ class Basket extends Entity {
   
   public static async setProduct(request: Endpoint.Request<object, Basket.SetProductRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
-      if (!basket) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
+      const basket = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      if (!basket) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
       const product = await Environmental.db_manager.findOne(Product, {where: {id: request.body.product}});
       if (!product) return new Response(Response.Code.NotFound, {product: request.body.product}).Complete(response);
       if (product.stock < request.body.quantity) return new Response(Response.Code.BadRequest, {stock: product.stock, quantity: request.body.quantity}).Complete(response);

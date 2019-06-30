@@ -245,7 +245,7 @@ namespace Endpoint {
   }
   
   export type UUIDLocals = {
-    id: string
+    uuid: string
   }
   
   export enum Method {

@@ -5,8 +5,8 @@ import "reflect-metadata";
 import SocketIO from "socket.io";
 import * as TypeORM from "typeorm";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
-import Response from "../microservice-shared/typescript/services/Response";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
+import Response from "../microservice-shared/typescript/services/Response";
 import IMSC from "../microservice-shared/typescript/typings/IMSC";
 import AMQPMethods from "./handlers/amqp";
 import WebsocketMethods from "./handlers/websocket";
@@ -38,8 +38,8 @@ Promise.props({
   await Environmental.mq_channel.consume("websocket", async message => {
     try {
       const request: IMSC.AMQPMessage<IMSC.WS.WebsocketMessage> = JSON.parse(message.content.toString());
-      console.log("[WS] Message consumed", request);
-      AMQPMethods[request.method].apply(null, request.parameters);
+      // console.log("[WS] Message consumed", request);
+      (AMQPMethods[request.method] as Function).apply(null, request.parameters);
     }
     catch (e) {
       console.log(e);
@@ -50,8 +50,8 @@ Promise.props({
   Environmental.ws_server.on("connection", socket => {
     socket.use((packet: [string, IMSC.WSMessage<IMSC.WS.MessageMethods[keyof IMSC.WS.MessageMethods]>, any], next) => {
       try {
-        console.log("[WS] Packet received", packet[1]);
-        WebsocketMethods[packet[1].method].apply(packet[1], packet[1].parameters);
+        // console.log("[WS] Packet received", packet[1]);
+        (WebsocketMethods[packet[1].method] as Function).apply(packet[1], packet[1].parameters);
         next();
       }
       catch (e) {

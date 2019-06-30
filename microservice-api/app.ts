@@ -23,7 +23,7 @@ Promise.props({
 .then(async dependencies => {
   
   Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
-    response.locals.params.id = id;
+    response.locals.params.uuid = id;
     next();
   });
   await new Directory(path.resolve(__dirname, "routes"), {extension: "js"}).require();

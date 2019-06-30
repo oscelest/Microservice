@@ -1,4 +1,5 @@
 import * as TypeORM from "typeorm";
+import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
 import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
@@ -6,7 +7,6 @@ import Exception from "../services/Exception";
 import Response from "../services/Response";
 import IMSC from "../typings/IMSC";
 import BasketProduct from "./BasketProduct";
-import uuid from "uuid";
 
 @TypeORM.Entity()
 @TypeORM.Unique("key", ["key"])
@@ -55,8 +55,8 @@ class Product extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
-      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.id}).Complete(response);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
@@ -74,8 +74,12 @@ class Product extends Entity {
       product.image = request.body.image;
       product.stock = request.body.stock;
       product.price = request.body.price;
-      await Environmental.db_manager.save(product);
-      new Response(Response.Code.OK, product.toJSON()).Complete(response);
+      
+      const entity = await Environmental.db_manager.save(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_create", parameters: [entity.id]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
+      
+      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
       console.log(e);
@@ -85,9 +89,9 @@ class Product extends Entity {
   
   public static async update(request: Endpoint.Request<object, Product.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.id}});
+      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
       if (!product) return new Response(Response.Code.NotFound, request.body).Complete(response);
-
+      
       if (product.key) product.key = request.body.key;
       if (product.title) product.title = request.body.title;
       if (product.description) product.description = request.body.description;
@@ -95,10 +99,25 @@ class Product extends Entity {
       if (product.stock) product.stock = request.body.stock;
       if (product.price) product.price = request.body.price;
       
-      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {method: "product_update", parameters: [product.id], source: "product", target: "websocket", id: uuid.v4()};
-      Environmental.mq_channel.sendToQueue("mail", Buffer.from(JSON.stringify(message)));
+      const entity = await Environmental.db_manager.save(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_update", parameters: [entity.id]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
       
-      new Response(Response.Code.OK, (await Environmental.db_manager.save(product)).toJSON()).Complete(response);
+      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
+    }
+    catch (e) {
+      new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
+    }
+  }
+  
+  public static async remove(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
+    try {
+      await Environmental.db_manager.delete(this, {where: {id: response.locals.params.uuid}});
+      
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_delete", parameters: [response.locals.params.uuid]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
+      
+      new Response(Response.Code.OK, {}).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);

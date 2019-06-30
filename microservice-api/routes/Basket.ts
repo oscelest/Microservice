@@ -23,11 +23,11 @@ new Endpoint<Endpoint.FindQuery, object, object>("/basket", Endpoint.Method.GET,
 new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/:uuid", Endpoint.Method.GET, [
   (request, response) => rp({
     method: "GET",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
     json:   true,
   })
   .then(res => {
-    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.uuid !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return new Response(Response.Code.OK, res.content).Complete(response);
   })
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
@@ -43,7 +43,7 @@ new Endpoint<object, object, Endpoint.UUIDLocals>("/basket/last", Endpoint.Metho
     },
   })
   .then(res => {
-    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.uuid !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return new Response(Response.Code.OK, res.content).Complete(response);
   })
   .catch(err => response.status(err.response.statusCode).json(err.response.body)),
@@ -70,14 +70,14 @@ new Endpoint<object, Basket.UpdateRequestBody, Endpoint.UUIDLocals>("/basket/:uu
   }),
   (request, response) => rp({
     method: "GET",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
     json:   true,
   })
   .then(res => {
-    if (res.user && res.user.id !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
+    if (res.user && res.user.uuid !== response.locals.user.id) return new Response(Response.Code.Forbidden, {auth: request.get("Authorization")}).Complete(response);
     return rp({
       method: "PUT",
-      url:    `http://basket:${process.env.PORT}/${response.locals.params.id}`,
+      url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}`,
       json:   true,
       body:   request.body,
     })
@@ -93,7 +93,7 @@ new Endpoint<object, Basket.SetProductRequestBody, Endpoint.UUIDLocals>("/basket
   }),
   (request, response) => rp({
     method: "POST",
-    url:    `http://basket:${process.env.PORT}/${response.locals.params.id}/product`,
+    url:    `http://basket:${process.env.PORT}/${response.locals.params.uuid}/product`,
     json:   true,
     body:   {
       product:  request.body.product,

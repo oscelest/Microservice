@@ -13,9 +13,19 @@ class FrontendApp extends App<Props> {
   private static Instance: FrontendApp;
   
   private WebsocketMethods: IMSC.WS.FrontendMessage = {
-    product_update(product: any) {
+    async product_create(product: any) {
       Product.products[product.id] = new Product(product);
       FrontendApp.Instance.setState(FrontendApp.Instance.state);
+    },
+    async product_update(product: any) {
+      Product.products[product.id] = new Product(product);
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+      await Basket.update();
+    },
+    async product_delete(product_id: string) {
+      delete Product.products[product_id];
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+      await Basket.update();
     },
   };
   
@@ -43,7 +53,7 @@ class FrontendApp extends App<Props> {
         } as IMSC.WSMessage<IMSC.WS.WebsocketMessage>);
         
         this.state.socket.on("message", (message: IMSC.WSMessage<IMSC.WS.FrontendMessage>) => {
-          this.WebsocketMethods[message.method].apply(message, message.parameters);
+          (this.WebsocketMethods[message.method] as Function).apply(message, message.parameters);
           console.log(message);
         })
       }

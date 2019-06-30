@@ -33,8 +33,8 @@ Promise.props({
   await Environmental.mq_channel.consume("mail", async message => {
     try {
       const request: IMSC.AMQPMessage<IMSC.AMQP.MailMessage> = JSON.parse(message.content.toString());
-      console.log("[WS] Message consumed", request);
-      AMQPMethods[request.method].apply(request, request.parameters);
+      // console.log("[Mail] Message consumed", request);
+      (AMQPMethods[request.method] as Function).apply(request, request.parameters);
     }
     catch (e) {
       console.log(e);

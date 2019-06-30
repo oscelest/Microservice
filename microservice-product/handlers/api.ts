@@ -5,3 +5,4 @@ new Endpoint<Endpoint.FindQuery, object, object>("/", Endpoint.Method.GET, (requ
 new Endpoint<object, object, Endpoint.UUIDLocals>("/:uuid", Endpoint.Method.GET, (request, response) => Product.findById(request, response));
 new Endpoint<object, Product.CreateRequestBody, object>("/", Endpoint.Method.POST, (request, response) => Product.create(request, response));
 new Endpoint<object, Product.UpdateRequestBody, Endpoint.UUIDLocals>("/:uuid", Endpoint.Method.PUT, (request, response) => Product.update(request, response));
+new Endpoint<object, object, Endpoint.UUIDLocals>("/:uuid", Endpoint.Method.DELETE, (request, response) => Product.remove(request, response));

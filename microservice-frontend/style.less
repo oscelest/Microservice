@@ -76,7 +76,7 @@ html, body, #__next {
       flex: 1 0 auto;
       flex-flow: row;
       justify-content: space-between;
-      border-bottom: 1px solid rgba(200,200,200,0.3);
+      border-bottom: 1px solid rgba(200, 200, 200, 0.3);
       padding: 5px;
 
       #links, #user {
@@ -163,7 +163,7 @@ html, body, #__next {
 
       .product {
         flex-flow: row;
-        border: 1px solid rgba(200,200,200,0.7);
+        border: 1px solid rgba(200, 200, 200, 0.7);
 
         img {
           flex: 0 0 auto;
@@ -216,7 +216,7 @@ html, body, #__next {
             width: 40px;
             height: 40px;
             font-size: 32px;
-            border: 1px solid rgba(200,200,200,0.7);
+            border: 1px solid rgba(200, 200, 200, 0.7);
             border-radius: 5px;
             justify-content: center;
             align-items: center;
@@ -290,7 +290,113 @@ html, body, #__next {
         font-style: italic;
       }
     }
+  }
 
+  #admin {
+    flex-flow: row;
+
+    #admin-products {
+      flex: 1 0 auto;
+      flex-flow: column;
+      width: 80%;
+      min-width: 400px;
+
+      .product {
+        height: 160px;
+        flex: 1 0 auto;
+        flex-flow: row;
+        padding: 10px;
+        border: 1px solid black;
+        border-radius: 20px;
+        margin: 0 20px 20px 20px;
+
+        .graphic {
+          width: 100px;
+          height: 140px;
+          justify-content: center;
+          align-items: center;
+
+          img {
+            max-width: 100px;
+            height: 80px;
+            margin: 10px 0;
+          }
+
+          .stock, .price {
+            flex-flow: row;
+            flex: 0 0 auto;
+            height: 20px;
+
+            label {
+              margin-right: 10px;
+            }
+
+            input {
+              flex: 1 1 auto;
+              width: 100%;
+              border: none;
+              border-bottom: 1px solid rgba(200, 200, 200, 0.6);
+              outline: none;
+            }
+          }
+        }
+
+        .info {
+          flex: 1 1 auto;
+          margin: 0 10px;
+          height: 140px;
+
+          div {
+            margin-bottom: 5px;
+            flex-flow: row;
+            flex: 1 1 auto;
+
+            &.description {
+              flex-flow: column;
+
+              label {
+                margin-right: 0;
+                margin-bottom: 5px;
+              }
+            }
+
+            &:last-of-type {
+              margin-bottom: 0;
+            }
+
+            label {
+              margin-right: 10px;
+            }
+          }
+
+          input {
+            flex: 1 1 auto;
+            border: none;
+            border-bottom: 1px solid rgba(200, 200, 200, 0.6);
+            outline: none;
+          }
+
+          textarea {
+            flex: 1 1 auto;
+            resize: none;
+            margin-bottom: 5px;
+          }
+        }
+
+        .buttons {
+          justify-content: space-around;
+          align-items: center;
+        }
+
+      }
+    }
+
+    #admin-create-product {
+      width: 20%;
+      min-width: 200px;
+      max-width: 400px;
+      flex: 0 0 auto;
+    }
   }
 
 }
