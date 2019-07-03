@@ -5,11 +5,9 @@ import "reflect-metadata";
 import * as TypeORM from "typeorm";
 import Directory from "../microservice-shared/typescript/services/Directory";
 import Endpoint from "../microservice-shared/typescript/services/Endpoint";
-import Entity from "../microservice-shared/typescript/services/Entity";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 
 Promise.props({
-  mq: Environmental.Connect(() => Promise.resolve(amqp.connect(process.env.MQ_HOST))),
   db: Environmental.Connect(() => Promise.resolve(TypeORM.createConnection({
       type:        "mysql",
       host:        process.env.DB_HOST,
@@ -24,8 +22,7 @@ Promise.props({
 })
 .then(async dependencies => {
   
-  Endpoint.setURLParameter("id", 0, (request, response: Endpoint.Response<{id: Buffer, uuid: string}>, next, id: string) => {
-    response.locals.params.id = Entity.bufferFromUUID(id);
+  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
     response.locals.params.uuid = id;
     next();
   });
@@ -33,14 +30,9 @@ Promise.props({
   Endpoint.publish();
   
   Object.assign(Environmental, {
-    mq_channel:    await dependencies.mq.createChannel(),
     db_connection: dependencies.db,
     db_manager:    dependencies.db.manager,
   });
-  
-  await Environmental.mq_channel.assertQueue("inventory");
-  await Environmental.mq_channel.assertQueue("basket");
-  await Environmental.mq_channel.assertQueue("mail");
   
   console.log("[API] Microservice online.");
 })

@@ -1,3 +1,4 @@
+import AMQP from "amqplib";
 import Promise from "bluebird";
 import path from "path";
 import "reflect-metadata";
@@ -7,6 +8,7 @@ import Endpoint from "../microservice-shared/typescript/services/Endpoint";
 import Environmental from "../microservice-shared/typescript/services/Environmental";
 
 Promise.props({
+  mq: Environmental.Connect(() => Promise.resolve(AMQP.connect(process.env.MQ_HOST))),
   db: Environmental.Connect(() => Promise.resolve(TypeORM.createConnection({
     type:     "mysql",
     host:     process.env.DB_HOST,
@@ -18,20 +20,18 @@ Promise.props({
   }))),
 })
 .then(async dependencies => {
-  
-  Endpoint.setURLParameter("uuid", 0, (request, response: Endpoint.Response<Endpoint.UUIDLocals>, next, id: string) => {
-    response.locals.params.uuid = id;
-    next();
-  });
   await new Directory(path.resolve(__dirname, "handlers/api.js")).require();
   Endpoint.publish();
   
   Object.assign(Environmental, {
+    mq_channel:    await dependencies.mq.createChannel(),
     db_connection: dependencies.db,
     db_manager:    dependencies.db.manager,
   });
   
-  console.log("[Basket] Microservice online.");
+  await Environmental.mq_channel.assertQueue("email");
+  
+  console.log("[Checkout] Microservice online.");
 })
 .catch(err => console.error(err));
 

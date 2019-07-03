@@ -4,11 +4,30 @@ import io from "socket.io-client";
 import uuid from "uuid";
 import IMSC from "../../microservice-shared/typescript/typings/IMSC";
 import Basket from "../entities/Basket";
+import Product from "../entities/Product";
 import User from "../entities/User";
 
 class FrontendApp extends App<Props> {
   
   public state: GlobalState;
+  private static Instance: FrontendApp;
+  
+  private WebsocketMethods: IMSC.WS.FrontendMessage = {
+    async product_create(product: any) {
+      Product.products[product.id] = new Product(product);
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+    },
+    async product_update(product: any) {
+      Product.products[product.id] = new Product(product);
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+      await Basket.update();
+    },
+    async product_remove(product_id: string) {
+      delete Product.products[product_id];
+      FrontendApp.Instance.setState(FrontendApp.Instance.state);
+      await Basket.update();
+    },
+  };
   
   constructor(props: Props) {
     super(props);
@@ -19,19 +38,24 @@ class FrontendApp extends App<Props> {
       socket:   io("ws.localhost"),
       setState: (state, callback) => this.setState(state, callback),
     };
+    FrontendApp.Instance = this;
   }
   
   public async componentDidMount() {
     if (localStorage.jwt) {
       try {
         Object.assign(this.state.user, await User.login());
+        
         this.state.socket.emit("message", {
-          source:     "frontend",
-          method:     "authorize",
-          target:     "websocket",
-          parameters: [this.state.socket.id, localStorage.jwt],
           id:         uuid.v4(),
-        } as IMSC.Message<IMSC.WS.WebsocketMessage>);
+          method:     "authorize",
+          parameters: [this.state.socket.id, localStorage.jwt],
+        } as IMSC.WSMessage<IMSC.WS.WebsocketMessage>);
+        
+        this.state.socket.on("message", (message: IMSC.WSMessage<IMSC.WS.FrontendMessage>) => {
+          (this.WebsocketMethods[message.method] as Function).apply(message, message.parameters);
+          console.log(message);
+        })
       }
       catch (e) {
         User.Instance.id = "";
@@ -43,11 +67,18 @@ class FrontendApp extends App<Props> {
         User.logout();
       }
     }
-    localStorage.basket ? await Basket.findCurrent() || await Basket.findLast() : await Basket.findLast();
+    if (User.Instance.id) {
+      if (localStorage.basket) {
+        await Basket.findCurrent() || await Basket.findLast()
+      }
+      else {
+        await Basket.findLast()
+      }
+    }
+    else {
+      await Basket.findCurrent()
+    }
     this.setState(Object.assign(this.state, {ready: true}));
-    
-    console.log(this.state);
-    console.log(User.Loading);
   }
   
   public componentWillUnmount() {

@@ -1,28 +1,27 @@
+import Product from "../entities/Product";
+
 namespace IMSC {
   
   export namespace AMQP {
     export interface WebsocketMessage {
-    }
-    
-    export interface FrontendMessage {
-    
-    }
-    
-    export interface BasketMessage {
-    }
-    
-    export interface InventoryMessage {
+      product_create(product_id: string)
+      product_update(product_id: string)
+      product_remove(product_id: string)
     }
     
     export interface MailMessage {
+      send(type: string, recipient_user_id: string)
     }
+    
+    export interface CheckoutMessage {}
+    
+    export interface ProductMessage {}
     
     export interface MessageMethods {
       mail: MailMessage
-      basket: BasketMessage
-      inventory: InventoryMessage
+      product: ProductMessage
+      checkout: CheckoutMessage
       websocket: WebsocketMessage
-      frontend: FrontendMessage
     }
   }
   
@@ -32,38 +31,24 @@ namespace IMSC {
     }
     
     export interface FrontendMessage {
-    
-    }
-    
-    export interface BasketMessage {
-    }
-    
-    export interface InventoryMessage {
-      // find(a: number): Promise<void>
-    }
-    
-    export interface MailMessage {
-      // send(a: string): Promise<void>
+      product_create(product: Product): void
+      product_update(product: Product): void
+      product_remove(product_id: string): void
     }
     
     export interface MessageMethods {
-      mail: MailMessage
-      basket: BasketMessage
-      inventory: InventoryMessage
       websocket: WebsocketMessage
       frontend: FrontendMessage
     }
   }
   
-  export type Message<Service extends WS.MessageMethods[keyof WS.MessageMethods]> = {
+  export type WSMessage<Service extends WS.MessageMethods[keyof WS.MessageMethods]> = {
     id: string
-    source: keyof WS.MessageMethods & string
-    target: keyof WS.MessageMethods & string
     method: keyof Service
     parameters: Parameters<Service[keyof Service]>
   }
   
-  export type Message<Service extends AMQP.MessageMethods[keyof AMQP.MessageMethods]> = {
+  export type AMQPMessage<Service extends AMQP.MessageMethods[keyof AMQP.MessageMethods]> = {
     id: string
     source: keyof AMQP.MessageMethods & string
     target: keyof AMQP.MessageMethods & string

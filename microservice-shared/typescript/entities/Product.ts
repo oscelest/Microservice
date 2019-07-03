@@ -1,4 +1,3 @@
-import _ from "lodash";
 import * as TypeORM from "typeorm";
 import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
@@ -6,14 +5,15 @@ import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
+import IMSC from "../typings/IMSC";
 import BasketProduct from "./BasketProduct";
 
 @TypeORM.Entity()
 @TypeORM.Unique("key", ["key"])
 class Product extends Entity {
   
-  @TypeORM.PrimaryColumn({type: "binary", length: 16, readonly: true, nullable: false})
-  public readonly id: Buffer;
+  @TypeORM.PrimaryGeneratedColumn("uuid")
+  public readonly id: string;
   
   @TypeORM.Column({length: 128})
   public key: string;
@@ -41,24 +41,12 @@ class Product extends Entity {
   
   /* Relations */
   
-  @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product)
+  @TypeORM.OneToMany(type => BasketProduct, basket_product => basket_product.product, {eager: false, nullable: false})
   baskets: BasketProduct[];
-  
-  /* Column Initialization */
-  
-  @TypeORM.BeforeInsert()
-  private beforeInsert() {
-    if (!this.id) _.set(this, "id", Buffer.from(uuid.v4().replace(/-/g, ""), "hex"));
-  }
-  
-  constructor() {
-    super();
-  }
   
   public static async find(request: Endpoint.Request<Endpoint.FindQuery, object>, response: Endpoint.Response<object>): Promise<void> {
     try {
-      const entities = await Environmental.db_manager.find(this, Endpoint.parseFindQueryOptions(request.query));
-      new Response(Response.Code.OK, entities.map(v => v.toJSON())).Complete(response);
+      new Response(Response.Code.OK, (await Environmental.db_manager.find(this, Endpoint.parseFindQueryOptions(request.query))).map(v => v.toJSON())).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in find method on ${this.name} entity.`, e)).Complete(response);
@@ -67,7 +55,7 @@ class Product extends Entity {
   
   public static async findById(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, response.locals.params);
+      const entity = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
       if (!entity) return new Response(Response.Code.NotFound, {id: response.locals.params.uuid}).Complete(response);
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
@@ -86,8 +74,12 @@ class Product extends Entity {
       product.image = request.body.image;
       product.stock = request.body.stock;
       product.price = request.body.price;
-      await Environmental.db_manager.save(product);
-      new Response(Response.Code.OK, product.toJSON()).Complete(response);
+      
+      const entity = await Environmental.db_manager.save(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_create", parameters: [entity.id]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
+      
+      new Response(Response.Code.OK, entity.toJSON()).Complete(response);
     }
     catch (e) {
       console.log(e);
@@ -97,10 +89,37 @@ class Product extends Entity {
   
   public static async update(request: Endpoint.Request<object, Product.UpdateRequestBody>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
     try {
-      const entity = await Environmental.db_manager.findOne(this, response.locals.params);
-      if (!entity) return new Response(Response.Code.NotFound, request.body).Complete(response);
-      await Environmental.db_manager.save(Object.assign(entity, request.body));
+      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      if (!product) return new Response(Response.Code.NotFound, request.body).Complete(response);
+      
+      if (product.key) product.key = request.body.key;
+      if (product.title) product.title = request.body.title;
+      if (product.description) product.description = request.body.description;
+      if (product.image) product.image = request.body.image;
+      if (product.stock) product.stock = request.body.stock;
+      if (product.price) product.price = request.body.price;
+      
+      const entity = await Environmental.db_manager.save(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_update", parameters: [entity.id]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
+      
       new Response(Response.Code.OK, entity.toJSON()).Complete(response);
+    }
+    catch (e) {
+      new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
+    }
+  }
+  
+  public static async remove(request: Endpoint.Request<object, object>, response: Endpoint.Response<Endpoint.UUIDLocals>): Promise<void> {
+    try {
+      const product = await Environmental.db_manager.findOne(this, {where: {id: response.locals.params.uuid}});
+      if (!product) return new Response(Response.Code.NotFound, request.body).Complete(response);
+  
+      await Environmental.db_manager.remove(product);
+      const message: IMSC.AMQPMessage<IMSC.AMQP.WebsocketMessage> = {id: uuid.v4(), source: "product", target: "websocket", method: "product_remove", parameters: [response.locals.params.uuid]};
+      Environmental.mq_channel.sendToQueue("websocket", Buffer.from(JSON.stringify(message)));
+      
+      new Response(Response.Code.OK, {}).Complete(response);
     }
     catch (e) {
       new Response(Response.Code.InternalServerError, new Exception(`Unhandled exception in update method on ${this.name} entity.`, e)).Complete(response);
@@ -122,7 +141,6 @@ namespace Product {
   }
   
   export type UpdateRequestBody = {
-    id: Buffer
     key: string
     title: string
     image: string

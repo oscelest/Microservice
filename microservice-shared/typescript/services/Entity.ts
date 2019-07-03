@@ -11,25 +11,29 @@ class Entity {
     });
   }
   
-  public static isUUID(id: string | Buffer) {
-    return Buffer.isBuffer(id) ? _.every([9, 13, 18, 23], k => id[k] === 45) : !!(id || "").toString().match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i);
+  public static isUUID(id: string) {
+    return !!(id || "").toString().match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i);
   }
   
-  public static bufferFromUUID(id: string | Buffer) {
-    return id instanceof Buffer ? id : (Entity.isUUID(id) ? Buffer.from((id || "").replace(/-/g, ""), "hex") : Buffer.from((id || ""), "ascii"));
-  }
-  
-  public static uuidFromBuffer(buffer: string | Buffer) {
-    return typeof buffer === "string" ? buffer : (_.join(_.tail(buffer.toString("hex").match(/([a-f0-9]{8})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{12})/)), "-"));
-  }
-  
-  public static hexFromUUID(uuid: string) {
-    return `0x${uuid.replace(/-/g, "")}`;
-  }
-  
-  public static hexFromBuffer(buffer: Buffer) {
-    return `0x${buffer.toString('hex')}`;
-  }
+  // public static isUUID(id: string | Buffer) {
+  //   return Buffer.isBuffer(id) ? _.every([9, 13, 18, 23], k => id[k] === 45) : !!(id || "").toString().match(/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i);
+  // }
+  //
+  // public static bufferFromUUID(id: string | Buffer) {
+  //   return id instanceof Buffer ? id : (Entity.isUUID(id) ? Buffer.from((id || "").replace(/-/g, ""), "hex") : Buffer.from((id || ""), "ascii"));
+  // }
+  //
+  // public static uuidFromBuffer(buffer: string | Buffer) {
+  //   return typeof buffer === "string" ? buffer : (_.join(_.tail(buffer.toString("hex").match(/([a-f0-9]{8})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{12})/)), "-"));
+  // }
+  //
+  // public static hexFromUUID(uuid: string) {
+  //   return `0x${uuid.replace(/-/g, "")}`;
+  // }
+  //
+  // public static hexFromBuffer(buffer: Buffer) {
+  //   return `0x${buffer.toString('hex')}`;
+  // }
   
 }
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import * as React from "react";
 import Frame from "../components/Frame";
 import Basket from "../entities/Basket";
@@ -10,16 +9,17 @@ class ProductsPage extends React.Component<Props, State> {
   
   constructor(props: Props) {
     super(props);
-    this.state = {products: []};
+    this.state = {
+      loading: false,
+    };
     this.changeInput = this.changeInput.bind(this);
     this.clickAddProduct = this.clickAddProduct.bind(this);
   }
   
-  public componentDidMount(): void {
-    const promise = Product.find(0, 10)
-    .then(res => this.setState(Object.assign(this.state, {products: res})));
-    
-    this.setState(Object.assign(this.state, {product_promise: promise}));
+  public async componentDidMount() {
+    this.setState(Object.assign(this.state, {loading: true}));
+    await Product.find();
+    this.setState(Object.assign(this.state, {loading: false}));
   }
   
   private async clickAddProduct(e: React.MouseEvent<HTMLButtonElement>, product: Product) {
@@ -41,18 +41,15 @@ class ProductsPage extends React.Component<Props, State> {
     return (
       <Frame title="Products | Webshop" globals={this.props.globals}>
         <div id="products">
-          {this.state.products.map((v, k) => {
-            // console.log(k, v);
+          {Object.values(Product.products).map((v, k) => {
             return (
-              <Link href="/" key={k}>
-                <div className="product">
-                  <span className="title">{v.title}</span>
-                  <span className="stock">{v.stock} left in stock</span>
-                  <img src={v.image} alt={v.description}/>
-                  <span className="price">{v.price / 100} DKK</span>
-                  <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
-                </div>
-              </Link>
+              <div className="product" key={k}>
+                <span className="title">{v.title}</span>
+                <span className="stock">{v.stock} left in stock</span>
+                <img src={v.image} alt={v.description}/>
+                <span className="price">{v.price / 100} DKK</span>
+                <button onClick={e => this.clickAddProduct(e, v)}>Add to basket</button>
+              </div>
             );
           })}
         </div>
@@ -67,15 +64,7 @@ interface Props {
 }
 
 interface State {
-  product_promise?: Promise<any>;
-  products: Product[];
-  
-  key?: string
-  title?: string
-  description?: string
-  image?: string
-  price?: number
-  stock?: number
+  loading: boolean
 }
 
 export default ProductsPage;

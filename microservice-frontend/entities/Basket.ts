@@ -15,6 +15,7 @@ class Basket extends Entity {
   public time_updated: Date;
   
   public static Instance: Basket = new Basket({id: "", user: null as any, products: [], flag_abandoned: false, flag_completed: false, time_created: new Date(0), time_updated: new Date(0)});
+  private static UpdateQuery: NodeJS.Timeout;
   
   constructor(object: EntityObject<Basket>) {
     super();
@@ -51,7 +52,8 @@ class Basket extends Entity {
         return new this(res.content);
       }
       return null;
-    });
+    })
+    .catch(() => null);
   }
   
   public static async findLast(): Promise<Basket | null> {
@@ -69,7 +71,8 @@ class Basket extends Entity {
         return new this(res.content);
       }
       return null;
-    });
+    })
+    .catch(() => null);
   }
   
   public static async create(): Promise<Basket> {
@@ -92,70 +95,64 @@ class Basket extends Entity {
   
   public static async update(): Promise<Basket> {
     try {
-      console.log(Basket.Instance);
       if (!Basket.Instance.id) await Basket.create();
-      await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}`, {
+      const response = await (await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}`, {
         method:  "PUT",
         headers: {
           "Authorization": localStorage.getItem("jwt") || "",
           "Content-Type":  "application/x-www-form-urlencoded",
         },
-        body:    `${User.Instance.id ? `user=${User.Instance.id}&` : ''}flag_completed=${Basket.Instance.flag_completed}&flag_abandoned=${Basket.Instance.flag_abandoned}`,
-      });
-      await Promise.all(Basket.Instance.products.map(async v => {
-        return console.log(v);
-      }))
-      
-      // await Basket.Instance.products.forEach(async v => {
-      //   console.log("what?")
-      //   try {
-      //     console.log("fetching something glorious", v);
-      //     await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}/product`, {
-      //       method:  "POST",
-      //       headers: {
-      //         "Authorization": localStorage.getItem("jwt") || "",
-      //         "Content-Type":  "application/x-www-form-urlencoded",
-      //       },
-      //       body:    `quantity=${v.quantity}&product=${v.product.id}`,
-      //     });
-      //   }
-      //   catch (e) {
-      //     console.log("ERROR INNER", e)
-      //   }
-      // });
+        body:    `${User.Instance.id ? `user=${User.Instance.id}&` : ""}flag_completed=${Basket.Instance.flag_completed}&flag_abandoned=${Basket.Instance.flag_abandoned}`,
+      })).json() as JSONResponse<EntityObject<BasketProduct>>;
+      if (response.code === 200) {
+        await Promise.all(Basket.Instance.products.map(async v => {
+          try {
+            return await fetch(`${location.protocol}//api.${location.host}/basket/${Basket.Instance.id}/product`, {
+              method:  "POST",
+              headers: {
+                "Authorization": localStorage.getItem("jwt") || "",
+                "Content-Type":  "application/x-www-form-urlencoded",
+              },
+              body:    `quantity=${v.quantity}&product=${v.product.id}`,
+            })
+            .then(async res => await res.json() as JSONResponse<EntityObject<BasketProduct>>)
+            .then(async res => {
+              if (res.code === 200) return res;
+              throw res;
+            });
+          }
+          catch (exception) {
+            if (exception.code === 400 && exception.content.quantity > exception.content.stock) {
+              v.quantity = exception.content.stock;
+              alert("Could not add product to basket. Quantity exceeds stock.");
+            }
+            return v;
+          }
+        }));
+      }
     }
-    catch (e) {
-      console.log("ERROR OUTER", e)
+    catch (exception) {
+      if (!Basket.UpdateQuery) {
+        Basket.UpdateQuery = setInterval(async () => {
+          await Basket.update();
+          clearInterval(Basket.UpdateQuery);
+        }, 5000);
+      }
     }
+    Basket.clean();
     return Basket.Instance;
   }
   
-  
   public static async setProduct(product: Product, quantity: number): Promise<Basket> {
-    const basket_product = Basket.findBasketProduct(product.id) || new BasketProduct({id: uuid.v4(), quantity: quantity, product: product, time_created: new Date(), time_updated: new Date()});
-    basket_product ? (basket_product.quantity = quantity) : Basket.Instance.products.push(basket_product);
+    const basket_product = Basket.findBasketProduct(product.id);
+    if (basket_product) {
+      basket_product.quantity = quantity;
+    }
+    else {
+      Basket.Instance.products.push(new BasketProduct({id: uuid.v4(), quantity: quantity, product: product, time_created: new Date(), time_updated: new Date()}));
+    }
     return await Basket.update();
   }
-  
-  
-}
-
-export interface BasketContent {
-  id: string;
-  user: User
-  products: BasketProductContent[]
-  flag_completed: boolean;
-  flag_abandoned: boolean;
-  time_created: Date;
-  time_updated: Date;
-}
-
-export interface BasketProductContent {
-  id: string
-  quantity: number
-  time_created: Date
-  time_updated: Date
-  product: Product
 }
 
 export default Basket;

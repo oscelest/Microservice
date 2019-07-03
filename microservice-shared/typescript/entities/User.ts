@@ -2,20 +2,20 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import _ from "lodash";
 import * as TypeORM from "typeorm";
-import uuid from "uuid";
 import Endpoint from "../services/Endpoint";
 import Entity from "../services/Entity";
 import Environmental from "../services/Environmental";
 import Exception from "../services/Exception";
 import Response from "../services/Response";
 import Basket from "./Basket";
+import Checkout from "./Checkout";
 
 @TypeORM.Entity()
 @TypeORM.Unique("email", ["email"])
 class User extends Entity {
   
-  @TypeORM.PrimaryColumn({type: "binary", length: 16, readonly: true, nullable: false})
-  public readonly id: Buffer;
+  @TypeORM.PrimaryGeneratedColumn("uuid")
+  public readonly id: string;
   
   @TypeORM.Column({length: 64})
   public username: string;
@@ -33,7 +33,7 @@ class User extends Entity {
   public readonly salt: Buffer;
   
   @TypeORM.Column({type: "binary", length: 16})
-  public secret: Buffer;
+  public secret: Buffer  = crypto.randomBytes(16);
   
   @TypeORM.Column({nullable: true})
   public readonly time_login: Date;
@@ -46,23 +46,13 @@ class User extends Entity {
   
   /* Relations - Outgoing */
   
-  @TypeORM.OneToMany(type => Basket, basket => basket.user)
+  @TypeORM.OneToMany(type => Basket, basket => basket.user, {nullable: false})
   public baskets: Basket[];
   
+  @TypeORM.OneToMany(type => Checkout, checkout => checkout.user, {nullable: false})
+  public checkouts: Checkout[];
+  
   /* Relations - Incoming */
-  
-  /* Column Initialization */
-  
-  @TypeORM.BeforeInsert()
-  private beforeInsert() {
-    if (!this.id) _.set(this, "id", Buffer.from(uuid.v4().replace(/-/g, ""), "hex"));
-    if (!this.secret) this.secret = crypto.randomBytes(16);
-  }
-  
-  constructor(id?: string | Buffer) {
-    super();
-    if (id) this.id = typeof id === "string" ? Entity.bufferFromUUID(id) : id;
-  }
   
   public set password(password: string) {
     _.set(this, "salt", crypto.randomBytes(128));
@@ -97,7 +87,7 @@ class User extends Entity {
       const user = await this.loginUser(request);
       _.set(user, "time_login", new Date());
       await Environmental.db_manager.save(user);
-      setTimeout(() => new Response(Response.Code.OK, {object: user.toJSON(), jwt: jwt.sign({id: Entity.uuidFromBuffer(user.id), type: "normal"}, Environmental.tokens.jwt, {expiresIn: "1w"})}).Complete(response), 3000);
+      new Response(Response.Code.OK, {object: user.toJSON(), jwt: jwt.sign({id: user.id, type: "normal"}, Environmental.tokens.jwt, {expiresIn: "1w"})}).Complete(response);
       
     }
     catch (e) {
@@ -122,7 +112,7 @@ class User extends Entity {
     if (!auth) throw new Exception.UnauthorizedRequestException("Could not authorize JWT.", {jwt: auth});
     const decoded = <User.JWT>jwt.decode(auth);
     if (!decoded) throw new Exception.MalformedRequestException("No user given by JWT.", {jwt: auth});
-    const user = await Environmental.db_manager.findOne(User, {where: {id: Entity.bufferFromUUID(decoded.id)}});
+    const user = await Environmental.db_manager.findOne(User, {where: {id: decoded.id}});
     if (!user) throw new Exception.MalformedRequestException("User given by JWT doesn't exist.", {jwt: auth});
     switch (decoded.type) {
       case "activation":
@@ -150,11 +140,6 @@ namespace User {
   export type LoginRequestBody = {
     email: string
     password: string
-  }
-  
-  export type LoginResponse = {
-    jwt: string;
-    object: any
   }
 }
 
